@@ -5,7 +5,7 @@ const loggingtoInfluxRoute = express.Router();// Adjust path as needed
 // POST endpoint for writing OPC data
 loggingtoInfluxRoute.post('/', async (req, res) => {
   try {
-    const { nodeId , value } = req.body;
+    const { nodeId , value  } = req.body;
 
     // Validate input
     if (!nodeId || value === undefined || value === null) {

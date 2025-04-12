@@ -167,7 +167,6 @@ const AddVariable=()=>{
         const message = JSON.parse(event.data);
        const nodeId = message.type;
        const value = message.data.value;
-       const ExpressionValue=`${expression}`
        const response = await axios.post("http://localhost:3001/logDataCloud", {
         nodeId: nodeId,
         value: value,
