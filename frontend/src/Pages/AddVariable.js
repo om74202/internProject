@@ -28,7 +28,7 @@ const AddVariable=()=>{
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/addVariable/opcuaData");
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`);
         setServerNames(response.data.map((item) => item.name));
       } catch (error) {
         console.error("Error fetching tags:", error);
@@ -42,7 +42,7 @@ const AddVariable=()=>{
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/addVariable");
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable`);
         setVariables(response.data.map((item) => item.name));
       } catch (error) {
         console.error("Error fetching variables:", error);
@@ -55,7 +55,7 @@ const AddVariable=()=>{
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/addVariable/tags");
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags`);
         setTag(response.data.map((item) => item.name));
       } catch (error) {
         console.error("Error fetching tags:", error);
@@ -100,11 +100,11 @@ const AddVariable=()=>{
 
   const handleSubmit = async () => {
     try{
-      const tagInfo = await axios.get('http://localhost:3001/addVariable/tags/' + selectedTag);
+      const tagInfo = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags/${selectedTag}`);
       const dataType = tagInfo.data[0][0].dataType;
       const nodeId = tagInfo.data[0][0].nodeId
       console.log(nodeId, dataType)
-      const response = await axios.post('http://localhost:3001/addVariable',{
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/addVariable`,{
       name: selectedVariable,
       tag: selectedTag,
       nodeId:nodeId,
@@ -124,7 +124,7 @@ const AddVariable=()=>{
 
   const handleDataLog = async ()=>{
     try{
-      const newSocket = new WebSocket("ws://localhost:3001/getTagsSub");
+      const newSocket = new WebSocket("ws://192.168.1.35:3001/getTagsSub");
 
       newSocket.onopen = () => {
         console.log("✅ WebSocket connected");
@@ -134,7 +134,7 @@ const AddVariable=()=>{
         const message = JSON.parse(event.data);
        const nodeId = message.type;
        const value = message.data.value;
-       const response = await axios.post("http://localhost:3001/logData", {
+       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logData`, {
         nodeId: nodeId,
         value: value,
        })
@@ -157,7 +157,7 @@ const AddVariable=()=>{
 
   const handleCloudDataLog = async ()=>{
     try{
-      const newSocket = new WebSocket("ws://localhost:3001/getTagsSub");
+      const newSocket = new WebSocket(`ws://192.168.1.35:3001/getTagsSub`);
 
       newSocket.onopen = () => {
         console.log("✅ WebSocket connected");
@@ -167,7 +167,7 @@ const AddVariable=()=>{
         const message = JSON.parse(event.data);
        const nodeId = message.type;
        const value = message.data.value;
-       const response = await axios.post("http://localhost:3001/logDataCloud", {
+       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logDataCloud`, {
         nodeId: nodeId,
         value: value,
        })

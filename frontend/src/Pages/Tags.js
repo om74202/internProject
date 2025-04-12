@@ -53,7 +53,7 @@ const App1=()=>{
     useEffect(() => {
         const fetchServers = async () => {
           try {
-            const response = await axios.get("http://localhost:3001/addVariable/opcuaData");
+            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`);
             setServers(response.data.map((server) => server.name));
           } catch (error) {
             console.error("Error fetching servers:", error);
@@ -94,7 +94,7 @@ const App1=()=>{
   useEffect(()=>{
     const getEndpoint = async ()=>{
       try{
-        const response = await axios.get(`http://localhost:3001/addVariable/opcuaData/${serverName}`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`);
         setEndpoint(response.data.endurl)
         setUsername(response.data.username);
         setPassword(response.data.password);
@@ -111,7 +111,7 @@ const App1=()=>{
 
   const fetchNodes = async (nodeId = "RootFolder") => {
     try {
-      const response = await axios.post("http://localhost:3001/getTagsSub", {
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/getTagsSub`, {
         endUrl: endpoint,
         url:endpoint,
         nodeId,
@@ -129,7 +129,7 @@ const App1=()=>{
   };
 
   useEffect(() => {
-    const newSocket = new WebSocket("ws://localhost:3001/getTagsSub");
+    const newSocket = new WebSocket(`ws://192.168.1.35:3001/getTagsSub`);
 
     newSocket.onopen = () => {
       console.log("✅ WebSocket connected");
@@ -249,18 +249,18 @@ const App1=()=>{
 
     try{
       const responses = await Promise.all(
-      tags.map(tag => axios.post('http://localhost:3001/addVariable/tags', {
+      tags.map(tag => axios.post(`${process.env.REACT_APP_BASE_URL}/addVariable/tags`, {
           nodeId: tag.id,          
           name: tag.name,
           dataType: tag.dataType,
           serverName:serverName
       }))
   );
-  const newSocket = new WebSocket("ws://localhost:3001/getTagsSub");
+  const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
     setSocket(newSocket);
     }catch(e){
       console.log(e);
-      const newSocket = new WebSocket("ws://localhost:3001/getTagsSub");
+      const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
     setSocket(newSocket);
     }
   }

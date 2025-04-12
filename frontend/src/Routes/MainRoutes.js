@@ -14,7 +14,8 @@ import App1 from "../Pages/Tags";
 import AddVariable from "../Pages/AddVariable";
 
 const ProtectedRoute = ({ element }) => {
-  const isAuth = localStorage.getItem("isAuth") === "true";
+  // const isAuth = localStorage.getItem("isAuth") === "true";
+  const isAuth = true;
   return isAuth ? element : <Navigate to="/login" />;
 };
 
@@ -27,7 +28,7 @@ const PublicRoute = ({ element }) => {
 const router = createBrowserRouter([
   {
     path: "/login",
-    element: <PublicRoute element={<Login />} />, 
+    element: <PublicRoute element={<App />} />, 
   },
   {
     path: "/",

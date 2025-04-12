@@ -22,7 +22,7 @@ const TabbedForms =  () => {
 
   const checkConnection=async()=>{
     try{
-      const response = await axios.post("http://localhost:3001/getTagsSub", {
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/getTagsSub`, {
         endUrl: endURL,
         nodeId:"RootFolder",
         securityPolicy:securityPolicy,
@@ -79,7 +79,7 @@ const TabbedForms =  () => {
       .map((id) => Number(id));
 
     if (activeTab === "opcua") {
-      apiUrl = `http://localhost:3001/addVariable/opcuaData`; // OPCUA-specific endpoint
+      apiUrl = `${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`; // OPCUA-specific endpoint
       payload = {
         endurl:endURL,
         securityPolicy:securityPolicy,
