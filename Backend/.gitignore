@@ -1,0 +1,10 @@
+# Node Modules
+node_modules/
+
+# Environment Variables
+.env
+
+# Optional: Build artifacts
+build/
+dist/
+.DS_Store #macOS specific
