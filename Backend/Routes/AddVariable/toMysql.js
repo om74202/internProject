@@ -46,6 +46,20 @@ toMysqlRoute.get('/', async (req, res) => {
     }
 });
 
+//Get for data sending and Replication
+toMysqlRoute.get('/variablesInfo' , async (req, res)=>{
+    try{
+        const [variableInfo] = await pool.execute(`SELECT variables.*, opcua.certificate , opcua.endurl,
+             opcua.securityPolicy, opcua.securityMode, opcua.username, opcua.password FROM variables 
+             INNER JOIN opcua ON variables.serverName = opcua.name;
+`)
+        res.json(variableInfo);
+    }catch(e){
+        console.log(e);
+        res.status(500).json({message:"Internal Server Error" , error:e})
+    }
+} )
+
 
 // to give opcua servers
 

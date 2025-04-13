@@ -1,5 +1,6 @@
 module.exports = (wss) => {
     const express = require("express");
+    const WebSocket = require("ws")
     const { OPCUAClient, AttributeIds, SecurityPolicy, MessageSecurityMode, ClientSubscription, ClientMonitoredItem , DataType , NodeClass} = require("node-opcua");
 
     const getNodesSubRoute = express.Router();
@@ -92,10 +93,6 @@ module.exports = (wss) => {
                     nodes.forEach(async node => {
 
                         try {
-                            const dataTypeNode = await session.read({
-                                nodeId: node.id,
-                                attributeId: AttributeIds.DataType
-                            });
                             
                         const monitoredItem = ClientMonitoredItem.create(
                             subscription,

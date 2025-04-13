@@ -1,5 +1,5 @@
 const express = require('express');
-const {exec} =require("child_process");
+const http = require('http')
 const cors=require("cors");
 const WebSocket = require("ws")
 const getDefaultEthernetIPRoute = require('./Routes/networkStatus/getDefaultEthernetIp');
@@ -31,12 +31,22 @@ const getNodesSubRoute = require('./Routes/GatewayProtocols/getTagsSub');
 const toMysqlRoute = require('./Routes/AddVariable/toMysql');
 const loggingtoInfluxRoute = require('./Routes/logData/loggingtoInflux');
 const loggingtoCloudRoute = require('./Routes/logData/loggingtoCloud');
+const getVariablesSubRoute = require('./Routes/GatewayProtocols/getVariablesSub');
+const getVariable2 = require('./Routes/GatewayProtocols/getVariablesSub2');
+const setupWebSocket = require('./Routes/GatewayProtocols/websocket');
+const updatesEmitter = require('./Routes/updatesEmitter');
+
 
 const app = express();
+const server = http.createServer(app);
 app.use(express.json());
-const wss = new WebSocket.Server({ noServer: true });
-const router=express.Router();
+// const wss = new WebSocket.Server({ noServer: true });
 app.use(cors());
+
+
+const wss1 = new WebSocket.Server({ noServer: true });
+const wss = new WebSocket.Server({ noServer: true });
+
 
 
 
@@ -85,6 +95,9 @@ app.use("/addVariable" , toMysqlRoute);
 app.use("/logdata", loggingtoInfluxRoute);
 app.use("/logdataCloud" , loggingtoCloudRoute)
 
+app.use("/" , getVariable2);
+// setupWebSocket(server);
+
 // Admin Config
 
 app.use("/updateCredentials",updateCredentialsRoute);
@@ -112,9 +125,12 @@ app.use("/getCurrentSSID",getCurrtenWiFiSSIDRoute);
 
 
 
-
-const port = 3001;
-const server =app.listen(port, () => console.log(`Server running on ${port} `));
+// Start server
+const PORT = 3001;
+server.listen(PORT, () => {
+  console.log(`🚀 HTTP server running at http://localhost:${PORT}`);
+  console.log(`🔌 WebSocket server listening at ws://localhost:${PORT}`);
+});
 
 
 server.on("upgrade", (req, socket, head) => {
@@ -122,7 +138,13 @@ server.on("upgrade", (req, socket, head) => {
         wss.handleUpgrade(req, socket, head, (ws) => {
             wss.emit("connection", ws, req);
         });
+    }else if (req.url==="/"){
+        wss1.handleUpgrade(req, socket , head , (ws) =>{
+            wss1.emit("connection" , ws , req)
+        })
     } else {
         socket.destroy();  // Reject other upgrades
     }
 });
+
+setupWebSocket(wss1);
