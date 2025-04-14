@@ -5,7 +5,7 @@ const loggingtoInfluxRoute = express.Router();// Adjust path as needed
 // POST endpoint for writing OPC data
 loggingtoInfluxRoute.post('/', async (req, res) => {
   try {
-    const { nodeId , value  } = req.body;
+    const { name , value  } = req.body;
 
     // Validate input
     if (!nodeId || value === undefined || value === null) {
@@ -17,9 +17,9 @@ loggingtoInfluxRoute.post('/', async (req, res) => {
 
     // Write to InfluxDB
     influxPool.writeData(
-      'opc_data3',
+      'opcua_variables',
       { value }, // Field(s) being stored
-      { nodeId } // Tag(s) for filtering
+      { name } // Tag(s) for filtering
     );
 
     res.status(200).json({ 

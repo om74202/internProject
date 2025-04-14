@@ -31,7 +31,6 @@ const getNodesSubRoute = require('./Routes/GatewayProtocols/getTagsSub');
 const toMysqlRoute = require('./Routes/AddVariable/toMysql');
 const loggingtoInfluxRoute = require('./Routes/logData/loggingtoInflux');
 const loggingtoCloudRoute = require('./Routes/logData/loggingtoCloud');
-const getVariablesSubRoute = require('./Routes/GatewayProtocols/getVariablesSub');
 const getVariable2 = require('./Routes/GatewayProtocols/getVariablesSub2');
 const setupWebSocket = require('./Routes/GatewayProtocols/websocket');
 const updatesEmitter = require('./Routes/updatesEmitter');

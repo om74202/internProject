@@ -97,7 +97,7 @@ getVariable2.post('/subscribe', async (req, res) => {
     }
 
     const monitoringResults = await Promise.allSettled(
-      variables.map(async ({ nodeId, name }) => {
+      variables.map(async ({ nodeId, name , expression }) => {
         const monitoredItem = ClientMonitoredItem.create(
           subscription,
           { nodeId, attributeId: AttributeIds.Value },
@@ -113,12 +113,12 @@ getVariable2.post('/subscribe', async (req, res) => {
             endpoint: endurl,
             nodeId,
             name,
+            expression,
             value: dataValue.value.value,
             status: dataValue.statusCode.name,
             timestamp: new Date(),
             dataType: DataType[dataValue.value.dataType]
           };
-          console.log(`[${update.timestamp.toISOString()}] ${name}:`, update.value);
           updatesEmitter.emit('data', update);
         });
 

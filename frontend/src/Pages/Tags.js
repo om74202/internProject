@@ -129,7 +129,7 @@ const App1=()=>{
   };
 
   useEffect(() => {
-    const newSocket = new WebSocket(`ws://192.168.1.35:3001/getTagsSub`);
+    const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
 
     newSocket.onopen = () => {
       console.log("✅ WebSocket connected");

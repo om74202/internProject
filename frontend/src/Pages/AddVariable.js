@@ -2,7 +2,9 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import AutocompleteInput from "../components/AutoCompleteInput";
 import { ListCard } from "../components/card";
-// import influxPool from "../../../Backend/db/influxPool";
+import { secureHeaders } from "hono/secure-headers";
+import MultiSelectDropdown from "../components/multipleSelectDropdown";
+import Label from "../components/label";
 const AddVariable=()=>{
   
 
@@ -155,6 +157,37 @@ const AddVariable=()=>{
 
 
 
+  // Real time data logging logic to cloud and r pi using variableSub2.js
+  const handleDataLog2 = async ()=>{
+
+    serverNames.forEach(async (serverName)=>{
+      try{
+      const serverData = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`)
+    const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
+    const variableNameValue = response.data.map(item => ({
+      name: item.name,
+      nodeId: item.nodeId
+      ,expression:item.expression
+    }));
+    const response2 = await axios.post(`${process.env.REACT_APP_BASE_URL}/subscribe` , {variables:variableNameValue
+      , endurl: serverData.data.endurl
+      , username : serverData.data.username , 
+      password : serverData.data.password ,
+      securePolicy : serverData.data.securityPolicy ,
+      securityMode : serverData.data.securityMode ,
+       certificate: serverData.data.certificate
+    })
+
+    const wss=new WebSocket("ws://localhost:3001");
+    
+  }catch(e){
+      console.log(e);
+    }
+    })
+  }
+
+
+
   const handleCloudDataLog = async ()=>{
     try{
       const newSocket = new WebSocket(`ws://192.168.1.35:3001/getTagsSub`);
@@ -186,6 +219,10 @@ const AddVariable=()=>{
     }
   }
 
+  const handledropdown = (selectedOptions) => {
+    console.log("Selected:", selectedOptions);
+  };
+
     return (
       <div>
       <div ref={wrapperRef} className="p-6 w-1/2 mx-auto bg-white rounded-xl shadow-md space-y-4">
@@ -193,12 +230,14 @@ const AddVariable=()=>{
       
       {/* Tag Dropdown */}
       <div className="relative">
+        <label  className="text-gray-500" > Select Server</label>
 
         <AutocompleteInput suggestions={serverNames} onSelect={(value)=>{setSelectedServerName(value)}}/>
 
       </div>
       
       <div className="relative">
+      <label  className="text-gray-500" > Select Tag</label>
 
         <AutocompleteInput suggestions={tag} onSelect={(value)=>{setSelectedTag(value)}}/>
 
@@ -209,6 +248,7 @@ const AddVariable=()=>{
       {/* Variable Dropdown */}
       
       <div className="relative">
+      <label  className="text-gray-500" > Variable's name</label>
         <input
           type="text"
           placeholder="Enter the Name of the Variable"
@@ -263,18 +303,23 @@ const AddVariable=()=>{
       >
         Submit
       </button>
+
+      <div>
+      <label  className="text-gray-500" > Select Servers for Data logging</label>
+      <MultiSelectDropdown options={serverNames} onChange={handledropdown} />
       <button 
-      onClick={handleDataLog}
+      onClick={handleDataLog2}
     className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
   >
     logData
   </button>
   <button 
   onClick={handleCloudDataLog}
-    className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+    className="w-full p-2 my-5 bg-blue-500 text-white rounded-md hover:bg-blue-600"
   >
     logData to cloud
   </button>
+      </div>
     </div>
     {variables.map((variable , index)=>{
       return(

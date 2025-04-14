@@ -9,7 +9,7 @@ const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 
 // Configuration
 const config = {
-  url: process.env.INFLUX_URL || 'http://192.168.1.128:8086',
+  url: process.env.INFLUX_URL || 'http://192.168.1.35:8086',
   token: process.env.INFLUX_TOKEN || 'LpMc9MLzp8h-sUErT0WtmP5eIx88-vkki_vz5PjyRE5efhKkJp7z3OmPZo9G5uadJ6odpMfWjIfSE_wKHdxarQ==',
   org: process.env.INFLUX_ORG || 'opsight',
   bucket: process.env.INFLUX_BUCKET || 'opcdata',
@@ -43,11 +43,14 @@ class InfluxPool {
       }
 
       if (typeof value === 'number') {
+        console.log("number")
         // Always use float to avoid integer/float conflicts
         point.floatField(key, value);
       } else if (typeof value === 'boolean') {
+        console.log("boolean")
         point.booleanField(key, value);
       } else if (typeof value === 'string') {
+        console.log("string")
         point.stringField(key, value);
       } else {
         // Convert objects, arrays, Date, etc. to strings

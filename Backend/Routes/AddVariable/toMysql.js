@@ -46,6 +46,18 @@ toMysqlRoute.get('/', async (req, res) => {
     }
 });
 
+toMysqlRoute.get('/onlyVariable/:name', async (req, res) => {
+    try {
+        const [variables] = await pool.execute(`SELECT * FROM variables WHERE serverName = "${req.params.name}"`);
+        res.json(variables);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+
+
 //Get for data sending and Replication
 toMysqlRoute.get('/variablesInfo' , async (req, res)=>{
     try{

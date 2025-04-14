@@ -2,6 +2,9 @@ function evaluateExpression(expression) {
   try {
     // Trim leading/trailing whitespace
     const trimmed = expression.trim();
+    if(expression === ""){
+      return NaN;
+    }
 
     // Sanitize input: only allow digits, operators, decimal points, parentheses, and whitespace
     const sanitized = trimmed.replace(/[^0-9+\-*/().\s]/g, '');
@@ -25,3 +28,5 @@ function evaluateExpression(expression) {
     return NaN;
   }
 }
+module.exports=evaluateExpression;
+
