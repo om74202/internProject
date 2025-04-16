@@ -10,6 +10,7 @@ const AddVariable=()=>{
 
   const [tag,setTag] = useState([]);
   const [serverNames , setServerNames] = useState([]);
+  const [dataLoggingServers  , setDataLoggingServers] =useState(serverNames)
   const [selectedServerName , setSelectedServerName] = useState("")
   const [selectedTag , setSelectedTag] = useState("");
   const [variables, setVariables] = useState([]);
@@ -124,43 +125,12 @@ const AddVariable=()=>{
   }   
   };
 
-  const handleDataLog = async ()=>{
-    try{
-      const newSocket = new WebSocket("ws://192.168.1.35:3001/getTagsSub");
-
-      newSocket.onopen = () => {
-        console.log("✅ WebSocket connected");
-      };
-  
-      newSocket.onmessage =  async (event) => {
-        const message = JSON.parse(event.data);
-       const nodeId = message.type;
-       const value = message.data.value;
-       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logData`, {
-        nodeId: nodeId,
-        value: value,
-       })
-       console.log("data logged ",response.data);
-        
-      };
-  
-      newSocket.onclose = () => {
-        console.log("❌ WebSocket disconnected");
-      };
-  
-      setSocket(newSocket);
-
-    }catch(e){
-      console.log(e);
-    }
-  }
-
 
 
   // Real time data logging logic to cloud and r pi using variableSub2.js
-  const handleDataLog2 = async ()=>{
+  const handleDataLog = async ()=>{
 
-    serverNames.forEach(async (serverName)=>{
+    dataLoggingServers.forEach(async (serverName)=>{
       try{
       const serverData = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`)
     const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
@@ -190,29 +160,36 @@ const AddVariable=()=>{
 
   const handleCloudDataLog = async ()=>{
     try{
-      const newSocket = new WebSocket(`ws://192.168.1.35:3001/getTagsSub`);
 
-      newSocket.onopen = () => {
-        console.log("✅ WebSocket connected");
-      };
-  
-      newSocket.onmessage =  async (event) => {
-        const message = JSON.parse(event.data);
-       const nodeId = message.type;
-       const value = message.data.value;
-       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logDataCloud`, {
-        nodeId: nodeId,
-        value: value,
-       })
-       console.log("data logged ",response.data);
-        
-      };
-  
-      newSocket.onclose = () => {
-        console.log("❌ WebSocket disconnected");
-      };
-  
-      setSocket(newSocket);
+      const socket = new WebSocket('ws://localhost:3001'); // adjust the port
+
+socket.onopen = () => {
+  console.log('Connected to cloud logging WebSocket');
+};
+
+socket.onmessage = async(event) => {
+  try {
+    const update = JSON.parse(event.data); 
+    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logdataCloud`,{
+      name:update.name,
+      value:update.value,
+      expression:update.expression
+    })
+
+    
+
+    // Send to cloud InfluxDB
+    
+
+  } catch (err) {
+    console.error('Invalid JSON from WebSocket:', event.data);
+  }
+};
+
+socket.onclose = () => {
+  console.log('Disconnected from backend WebSocket');
+};
+
 
     }catch(e){
       console.log(e);
@@ -221,6 +198,7 @@ const AddVariable=()=>{
 
   const handledropdown = (selectedOptions) => {
     console.log("Selected:", selectedOptions);
+    setDataLoggingServers(selectedOptions)
   };
 
     return (
@@ -308,7 +286,7 @@ const AddVariable=()=>{
       <label  className="text-gray-500" > Select Servers for Data logging</label>
       <MultiSelectDropdown options={serverNames} onChange={handledropdown} />
       <button 
-      onClick={handleDataLog2}
+      onClick={handleDataLog}
     className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
   >
     logData

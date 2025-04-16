@@ -32,38 +32,67 @@ class InfluxPool {
     return InfluxPool.instance;
   }
 
-  writeData(measurement, fields, tags = {}) {
+  // writeData(measurement, fields, tags = {}) {
+  //   const point = new Point(measurement);
+    
+
+  //   Object.entries(fields).forEach(([key, value]) => {
+  //     if (value === null || value === undefined) {
+  //       // Skip null/undefined values
+  //       return;
+  //     }
+
+  //     if (typeof value === 'number') {
+  //       // Always use float to avoid integer/float conflicts
+  //       point.floatField(key, value);
+  //     } else if (typeof value === 'boolean') {
+  //       point.booleanField(key, value);
+  //     } else if (typeof value === 'string') {
+  //       point.stringField(key, value);
+  //     } else {
+  //       // Convert objects, arrays, Date, etc. to strings
+  //       point.stringField(key, JSON.stringify(value));
+  //     }
+  //     console.log(key , value)
+  //   });
+    
+    
+  //   // Add tags
+  //   Object.entries(tags).forEach(([key, value]) => {
+  //     point.tag(key, String(value)); 
+  //   });
+    
+  //   this.writeApi.writePoint(point);
+  // }
+
+  writeData(measurement, name, value, tags = {}) {
     const point = new Point(measurement);
-    
-
-    Object.entries(fields).forEach(([key, value]) => {
-      if (value === null || value === undefined) {
-        // Skip null/undefined values
-        return;
-      }
-
-      if (typeof value === 'number') {
-        console.log("number")
-        // Always use float to avoid integer/float conflicts
-        point.floatField(key, value);
-      } else if (typeof value === 'boolean') {
-        console.log("boolean")
-        point.booleanField(key, value);
-      } else if (typeof value === 'string') {
-        console.log("string")
-        point.stringField(key, value);
-      } else {
-        // Convert objects, arrays, Date, etc. to strings
-        point.stringField(key, JSON.stringify(value));
-      }
-    });
-    
-    
+  
+    // Handle the value based on its type
+    if (value === null || value === undefined) {
+      console.warn(`Skipping null/undefined value for ${name}`);
+      return; // Skip writing this point
+    }
+  
+    // Add the field (using the 'name' parameter as field name)
+    if (typeof value === 'number') {
+      point.floatField(name, value);
+    } else if (typeof value === 'boolean') {
+      point.booleanField(name, value);
+    } else if (typeof value === 'string') {
+      point.stringField(name, value);
+    } else {
+      // For objects/arrays, convert to JSON string
+      point.stringField(name, JSON.stringify(value));
+    }
+  
+    console.log(`Writing ${name}:`, value , "in ", measurement);
+  
     // Add tags
-    Object.entries(tags).forEach(([key, value]) => {
-      point.tag(key, String(value)); 
+    Object.entries(tags).forEach(([key, tagValue]) => {
+      point.tag(key, String(tagValue));
     });
-    
+  
     this.writeApi.writePoint(point);
   }
 
@@ -78,6 +107,8 @@ class InfluxPool {
 }
 
 const influxPool = new InfluxPool();
+influxPool.queryApi=influxPool.queryApi;
+influxPool.bucket=config.bucket;
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {

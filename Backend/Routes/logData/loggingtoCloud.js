@@ -1,25 +1,24 @@
 const express = require('express');
 const CloudInfluxPool = require('../../db/cloudInfluxPool');
+const evaluateExpression = require('../../functions/expressionEval');
+const evaluateFormulaExpression = require('../../functions/evalFormula');
 const loggingtoCloudRoute = express.Router();// Adjust path as needed
 
 // POST endpoint for writing OPC data
 loggingtoCloudRoute.post('/', async (req, res) => {
   try {
-    const { nodeId, value } = req.body;
+    const { name , value , expression } = req.body;
 
     // Validate input
-    if (!nodeId || value === undefined || value === null) {
+    if (!name || value === undefined || value === null) {
       return res.status(400).json({ 
         error: 'Both nodeId and value are required' 
       });
     }
+    const valuef=await evaluateFormulaExpression(value+expression)
 
-    // Write to InfluxDB
-    CloudInfluxPool.writeData(
-      'opc_data_Cloud',
-      { value }, // Field(s) being stored
-      { nodeId } // Tag(s) for filtering
-    );
+    CloudInfluxPool.writeData('OpcuaVariable' , {name} , {valuef})
+    console.log("data to Cloud" , name ,value , valuef)
 
     res.status(200).json({ 
       success: true,
