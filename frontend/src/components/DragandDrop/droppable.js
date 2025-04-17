@@ -11,7 +11,7 @@ export function DropZone({ id, children }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div className="w-full" ref={setNodeRef} style={style}>
       {children}
     </div>
   );

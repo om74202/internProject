@@ -10,6 +10,7 @@ import ChevronDownIcon from '@heroicons/react/24/solid/ChevronDownIcon';
 import { FolderIcon} from '@heroicons/react/24/solid';
 import ChevronRightIcon from '@heroicons/react/24/solid/ChevronRightIcon';
 import AutocompleteInput from '../components/AutoCompleteInput';
+import { useParams } from 'react-router-dom';
 
 
 
@@ -24,44 +25,96 @@ import AutocompleteInput from '../components/AutoCompleteInput';
 
 
 
-const App1=()=>{
+const Tags=()=>{
   const navigate=useNavigate()
-  const [servers , setServers] = useState([]);
   // server credentials
   const [username , setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [securityMode , setSecurityMode] = useState("")
   const [securityPolicy , setSecurityPolicy] = useState("")
-  const [ serverName , setServerName] = useState("")
+  const {serverName} = useParams();
   const [endpoint, setEndpoint] = useState(""); // OPC UA Endpoint
   const [nodes, setNodes] = useState([]); // Stores the root nodes
   const [expandedNodes, setExpandedNodes] = useState({});
   const [certificate , setCertificate] = useState(null);
   const [tags , setTags]=useState([]); 
+  const [error , setError ] = useState("")
   const [socket , setSocket] = useState(null);
+  
+
+  const [savedMessage , setSavedMessage] = useState("")
+  const [showSavedMessage , setShowSavedMessage] = useState(false)
     // row Delete
     const [selectedRowId , setSelectedRowId] = useState(null);
     const [selectedNodeId , setSelectedNodeId] = useState(null)
     //frequency for data subscription
-    const [frequency , setFrequency] = useState("1000")
+    const [frequency , setFrequency] = useState(1000)
+    const [showError , setShowError] = useState(false)
+
+
+    useEffect(() => {
+      const initializeServer = async () => {
+        try {
+          // 1. First fetch server details
+          const response = await axios.get(
+            `${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`
+          );
+          
+          const { 
+            endurl, 
+            username: serverUsername, 
+            password: serverPassword,
+            securityMode: serverSecurityMode,
+            securityPolicy: serverSecurityPolicy 
+          } = response.data;
+    
+          // 2. Update state synchronously
+          setEndpoint(endurl);
+          setUsername(serverUsername);
+          setPassword(serverPassword);
+          setSecurityMode(serverSecurityMode);
+          setSecurityPolicy(serverSecurityPolicy);
+    
+          // 3. Immediately fetch nodes with the new values
+          const rootNodes = await fetchNodes("RootFolder", {
+            endUrl: endurl,
+            securityPolicy: serverSecurityPolicy,
+            securityMode: serverSecurityMode,
+            username: serverUsername,
+            password: serverPassword,
+            frequency
+          });
+    
+          setNodes(rootNodes);
+        } catch (error) {
+          console.error("Initialization error:", error);
+        }
+      };
+    
+      initializeServer();
+    }, [serverName]);
+
+    useEffect(()=>{
+      try{
+        const setData=async ()=>{
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`);
+          setEndpoint(response.data.endurl)
+          setUsername(response.data.username);
+          setPassword(response.data.password);
+          setSecurityMode(response.data.securityMode);
+          setSecurityPolicy(response.data.securityPolicy);
+          setCertificate(response.data.certificate)
+        }
+        setData();
+      }catch{
+        console.log("error in first")
+      }
+    },[])
+    
  
 
   
 
-    //drag and drop logic
-
-    useEffect(() => {
-        const fetchServers = async () => {
-          try {
-            const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`);
-            setServers(response.data.map((server) => server.name));
-          } catch (error) {
-            console.error("Error fetching servers:", error);
-          }
-        };
-      
-        fetchServers();
-      }, []);
 
 
   function handleDragEnd(event) {
@@ -91,42 +144,35 @@ const App1=()=>{
     console.log(id);
   };
 
-  useEffect(()=>{
-    const getEndpoint = async ()=>{
-      try{
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`);
-        setEndpoint(response.data.endurl)
-        setUsername(response.data.username);
-        setPassword(response.data.password);
-        setSecurityMode(response.data.securityMode);
-        setSecurityPolicy(response.data.securityPolicy);
-        console.log(response.data)
-      }catch(e){
-        console.log("error while fetching endpoint", e)
-      }
-    }
-    getEndpoint();
-  },[serverName])
 
 
-  const fetchNodes = async (nodeId = "RootFolder") => {
+
+  const fetchNodes = async (nodeId = "RootFolder" , overrideParams = {}) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/getTagsSub`, {
+      const params = {
         endUrl: endpoint,
-        url:endpoint,
+        url: endpoint,
         nodeId,
-        securityPolicy:securityPolicy,
-        securityMode:securityMode,
-        username:username,
-        password:password,
-        frequency:frequency
-      });
+        securityPolicy,
+        securityMode,
+        username,
+        password,
+        frequency,
+        ...overrideParams // Allow overriding defaults
+      };
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/getTagsSub`,
+        params
+      );
       return response.data.nodes;
     } catch (error) {
       console.error("Error fetching nodes:", error);
       return [];
     }
   };
+
+  
 
   useEffect(() => {
     const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
@@ -179,25 +225,23 @@ const App1=()=>{
   const renderNodes = (nodes, depth = 0) => (
     <ul
       className={`
-        space-y-1 
         ${depth === 0 
-          ? 'border rounded-2xl p-4 shadow-sm bg-amber-50' 
+          ? 'border rounded-2xl  shadow-sm ' 
           : ''
         }
       `}
     >
       {nodes.map((node) => (
-        <li key={node.id} className="group">
+        <li key={node.id} className="">
           <div 
             onClick={() => handleNodeClick(node.id)}
             className={`
-              flex items-center py-2 px-4 rounded-xl transition-all
-              hover:bg-amber-100/80 cursor-pointer
+              flex  cursor-pointer
               ${selectedNodeId === node.id ? 'bg-amber-200' : ''}
             `}
           >
             {/* Expand/collapse icon */}
-            <span className="w-5 text-amber-500 mr-2">
+            <span className="w-3 text-amber-500 mr-2">
               {expandedNodes[node.id] ? (
                 <ChevronDownIcon className="h-4 w-4" />
               ) : (
@@ -209,9 +253,9 @@ const App1=()=>{
             <DraggableItem id={node.id} node={node}>
               <div className="flex items-center flex-1 min-w-0">
                 {node.valueMag !== null && (
-                  <LinkOutlined className="text-amber-600 mr-2" />
+                  <LinkOutlined className=" " />
                 )}
-                <span className="truncate font-semibold text-gray-700">
+                <span>
                   {node.name}
                 </span>
               </div>
@@ -220,7 +264,7 @@ const App1=()=>{
   
           {/* Recursive render for children */}
           {expandedNodes[node.id] && expandedNodes[node.id].length > 0 && (
-            <div className="ml-5 border-l-2 border-amber-200 pl-3">
+            <div className=" border-l-2 border-amber-200 pl-3">
               {renderNodes(expandedNodes[node.id], depth + 1)}
             </div>
           )}
@@ -256,12 +300,15 @@ const App1=()=>{
           serverName:serverName
       }))
   );
+  setSavedMessage("Tags Saved");
+  setShowSavedMessage(true)
   const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
     setSocket(newSocket);
     }catch(e){
       console.log(e);
       const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
     setSocket(newSocket);
+    alert(e)
     }
   }
 
@@ -275,128 +322,16 @@ const App1=()=>{
   
 
   return (
-    // <div className='flex flex-row-reverse'>
-    //   <DndContext onDragEnd={handleDragEnd}>
-    //   <div className='bg-gray-300 w-2/3 h-screen'> 
-      
-        
-
-    //     //table
-
-    //     <DropZone id="DropZone">
-    //             <div className="h-screen"> 
-    //             <div className="overflow-x-auto">
-    //           <table className="min-w-full border border-gray-200">
-    //             <thead>
-    //               <tr className="bg-gray-200">
-    //                 <th className="border px-4 py-2">S. No.</th>
-    //                 <th className="border px-4 py-2">Node ID</th>
-    //                 <th className="border px-4 py-2">Value</th>
-    //                 <th className="border px-4 py-2">Data Type</th>
-    //                 <th className="border px-4 py-2">Name</th>
-    //                 <th className="border px-4 py-2">Status</th>
-    //               </tr>
-    //             </thead>
-    //             <tbody>
-    //               {tags.map((tag, index) => (
-    //                 <tr key={index} onClick={()=> handleRowClick(tag.id)}
-    //                 className={
-    //                    "hover:bg-gray-100 cursor-pointer"+
-    //                   (selectedRowId === tag.id ? " bg-gray-400" : "")
-    //                 }
-                    
-                    
-    //                 onContextMenu={(e) => handleContextMenu(e, tag.id)}>
-    //                   <td className="border px-4 py-2">{index + 1}</td>
-    //                   <td className="border px-4 py-2">{tag.id}</td>
-    //                   <td className="border px-4 py-2">{tag.valueMag || "N/A"}</td>
-    //                   <td className="border px-4 py-2">{tag.dataType || "Unknown"}</td>
-    //                   <td className="border px-4 py-2">{tag.name}</td>
-    //                   <td className="border px-4 py-2">{tag.status}</td>
-    //                 </tr>
-                    
-    //               ))}
-    //             </tbody>
-    //           </table>
-    //         </div>
-
-    //         <div>
-    //         <div className='flex justify-end'>
-    //         <button type="button" onClick={saveTags}  className="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Save Tags</button>
-
-    //         <button type="button" onClick={()=>{navigate('/AddVariable')}}  className="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Add Variable</button>
-
-      
-    // </div>
-    //         </div>
-    //             </div>
-    //             </DropZone>
-        
-    //   </div>
-     
-
-    //   <div className='flex justify-start flex-col  w-1/3 '>
-    //   <div className='py-4 '>
-    //     <h2 >Enter the OPCUA Endpoint url</h2>
-    //     {/* input for opcua  */}
-      
-    //   <input className=' border w-full' type='text' placeholder='opc.tcp://server_address:port' onKeyUp={(e)=>{
-    //     setEndpoint(e.target.value);
-    //   }}/>
-    //   </div>
-
-    //   <button className=' 
-    //   text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium
-    //    rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none
-    //     dark:focus:ring-blue-800 w-1/4
-    //   ' onClick={handleConnect}>Connect</button>
-      
-    //   <div className='py-6'>
-    //     {nodes.length >= 0 ?  renderNodes(nodes) : <p>No nodes loaded.</p>}
-    //   </div>
-
-    //   </div>
-    //   </DndContext>
-
-      
-      
-    // </div>
     <div className="flex bg-white h-screen  font-sans">
   <DndContext onDragEnd={handleDragEnd}>
 
     {/* Node Browser Sidebar */}
-    <div className="w-1/3 h-full bg-white shadow-md p-4 border-l overflow-auto">
+    <div className="w-1/5 h-full bg-white shadow-md p- border-l overflow-auto">
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Your OPCUA Server
-          </label>
-          <AutocompleteInput suggestions={servers} onSelect={(value)=>{setServerName(value)}} />
-        </div>
-
-
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-            Enter the Browsing  frequency (in milliseconds)
-          </label>
-
-        <input
-        type="text"
-        value={frequency}
-        onChange={(value)=>{setFrequency(value.target.value)}}
-        placeholder="Enter Subscription frequency in milliseconds"
-        className="autocomplete-input bg-slate-200 border rounded-lg h-9 border-gray-300  w-full "
-      />
-
-        <button
-          onClick={handleConnect}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          Browse Tags
-        </button>
 
         <div>
-          <h2 className="text-lg font-semibold mt-4 mb-2">Browse Nodes</h2>
-          <div className="space-y-2">
+          <h2 className="text-sm font-semibold  mt-4 mb-2">Browse Nodes</h2>
+          <div className="">
             {nodes.length >= 0 ? renderNodes(nodes) : <p>No nodes loaded.</p>}
           </div>
         </div>
@@ -404,8 +339,37 @@ const App1=()=>{
     </div>
     
     {/* Tag Table Section */}
-    <div className="w-2/3 h-full overflow-hidden p-4">
-      <DropZone id="DropZone">
+    <DropZone  id="DropZone">
+    <div className="w-4/5  h-screen overflow-hidden p-4">
+
+    <input
+  type="number"
+  value={frequency}
+  onChange={(e) => {
+    const inputVal = e.target.value;
+    setFrequency(inputVal);
+
+    const parsed = parseInt(inputVal, 10);
+    if (!isNaN(parsed) && parsed >= 500) {
+      setFrequency(parsed);
+      setShowError(false)
+      setError("");
+    } else {
+      setShowError(true)
+      setError("Enter a value more than 500ms");
+    }
+  }}
+  placeholder="Enter subscription frequency in milliseconds"
+  className="bg-slate-200 border rounded-lg h-9 border-gray-300 w-40 px-2"
+/>
+
+{showError && (
+  <p className="text-red-500 text-sm mt-1">{error}</p>
+)}
+
+
+    
+      
         <div className="h-full flex flex-col space-y-4">
           <h1 className="text-2xl font-semibold mb-2">Selected Tags</h1>
           <div className="overflow-auto border rounded shadow-sm bg-white">
@@ -450,18 +414,19 @@ const App1=()=>{
               onClick={saveTags}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
             >
-              Save Tags
+             {showSavedMessage ? "Tags Saved" : "Save Tags"}
             </button>
             <button
-              onClick={() => navigate('/AddVariable')}
+              onClick={() => navigate(`/AddVariable/${serverName}`)}
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
             >
               Add Variable
             </button>
           </div>
         </div>
-      </DropZone>
+      
     </div>
+    </DropZone>
 
     
   </DndContext>
@@ -471,4 +436,4 @@ const App1=()=>{
         )
 }
 
-export default App1
+export default Tags

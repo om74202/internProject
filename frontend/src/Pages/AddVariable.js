@@ -5,6 +5,7 @@ import { ListCard } from "../components/card";
 import { secureHeaders } from "hono/secure-headers";
 import MultiSelectDropdown from "../components/multipleSelectDropdown";
 import Label from "../components/label";
+import TagTable from "../components/VariableTable";
 const AddVariable=()=>{
   
 
@@ -202,11 +203,32 @@ socket.onclose = () => {
   };
 
     return (
-      <div>
-      <div ref={wrapperRef} className="p-6 w-1/2 mx-auto bg-white rounded-xl shadow-md space-y-4">
-      <h2 className="text-xl font-bold text-center">Tag & Variable Form</h2>
+      <div className="">
+        <div>
+          <TagTable/>
+        </div>
       
-      {/* Tag Dropdown */}
+    <div className="w-full">{variables.map((variable , index)=>{
+      return(
+        <ListCard  key={index} title={variable}/>
+      )
+    })}
+    </div>
+    </div>
+    
+      )
+}
+
+export default AddVariable;
+
+
+
+
+
+
+
+{/* <div ref={wrapperRef} className="p-6 w-full mx-auto bg-white rounded-xl shadow-md space-y-4">
+      <h2 className="text-xl font-bold text-center">Tag & Variable Form</h2>
       <div className="relative">
         <label  className="text-gray-500" > Select Server</label>
 
@@ -223,7 +245,7 @@ socket.onclose = () => {
 
 
       
-      {/* Variable Dropdown */}
+  
       
       <div className="relative">
       <label  className="text-gray-500" > Variable's name</label>
@@ -239,10 +261,6 @@ socket.onclose = () => {
       </div>
 
       {error && <span className="font-bold text-red-600">Please assign a unique  name to Tag </span>}
-      
-      
-      
-      {/* Expression Input */}
       <div className="flex flex-col">
       <input
         type="text"
@@ -274,7 +292,7 @@ socket.onclose = () => {
       
 
       
-      {/* Submit Button */}
+   
       <button 
         onClick={handleSubmit} 
         className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
@@ -282,31 +300,5 @@ socket.onclose = () => {
         Submit
       </button>
 
-      <div>
-      <label  className="text-gray-500" > Select Servers for Data logging</label>
-      <MultiSelectDropdown options={serverNames} onChange={handledropdown} />
-      <button 
-      onClick={handleDataLog}
-    className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-  >
-    logData
-  </button>
-  <button 
-  onClick={handleCloudDataLog}
-    className="w-full p-2 my-5 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-  >
-    logData to cloud
-  </button>
-      </div>
-    </div>
-    {variables.map((variable , index)=>{
-      return(
-        <ListCard  key={index} title={variable}/>
-      )
-    })}
-    </div>
-    
-      )
-}
-
-export default AddVariable;
+      
+    </div> */}

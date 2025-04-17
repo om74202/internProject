@@ -14,11 +14,11 @@ export const ListCard=({title})=>{
     }
     
     return (
-        <div class="w-screen mx-auto  rounded-xl shadow-md overflow-hidden md:max-w-2xl m-4">
+        <div className="w-screen mx-auto  rounded-xl shadow-md overflow-hidden md:max-w-2xl m-4">
   {/* <!-- Card Header with Icons --> */}
-  <div class="flex justify-between items-center p-4 bg-green-100 hover:bg-green-200 border-b">
-    <h3 class="text-lg font-semibold text-gray-900">{title}</h3>
-    <div class="flex space-x-2">
+  <div className="flex justify-between items-center p-4 bg-green-100 hover:bg-green-200 border-b w-full">
+    <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+    <div className="flex space-x-2">
       {/* <!-- Edit Icon --> */}
       <button onClick={handleEdit}  class="text-blue-500 hover:text-blue-700 focus:outline-none">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

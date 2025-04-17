@@ -141,3 +141,22 @@ const MQTTConfigurationForm = () => {
 };
 
 export default MQTTConfigurationForm;
+
+
+
+{/* <div>
+      <label  className="text-gray-500" > Select Servers for Data logging</label>
+      <MultiSelectDropdown options={serverNames} onChange={handledropdown} />
+      <button 
+      onClick={handleDataLog}
+    className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+  >
+    logData
+  </button>
+  <button 
+  onClick={handleCloudDataLog}
+    className="w-full p-2 my-5 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+  >
+    logData to cloud
+  </button>
+      </div> */}

@@ -17,7 +17,7 @@ export const  DraggableItem=({ id, children,node })=> {
   };
 
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
+    <div ref={setNodeRef} {...listeners} {...attributes} >
       {children}
     </div>
   );

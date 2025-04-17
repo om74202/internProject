@@ -9,10 +9,11 @@ import {
   MdOutlineWifiPassword,
 } from "react-icons/md";
 import { SiStatuspal } from "react-icons/si";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate , useLocation , matchPath} from "react-router-dom";
 import Logo from "../../../Assets/Logo/DarkLogo.png";
 import { BiEdit, BiLogOut } from "react-icons/bi";
 import { LinkOutlined, WifiOutlined } from "@ant-design/icons";
+
 
 
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-tags" viewBox="0 0 16 16">
@@ -23,6 +24,14 @@ import { LinkOutlined, WifiOutlined } from "@ant-design/icons";
 const Drawer = () => {
 
   const navigate = useNavigate()
+  const location = useLocation();
+
+const hiddenRoutes = ['/login', '/tags/:serverName', '/addVariable/:serverName'];
+
+const shouldHideSidebar = hiddenRoutes.some((routePattern) =>
+  matchPath(routePattern, location.pathname)
+);
+
 
   const handleSignOut = () => {
     localStorage.setItem("isAuth", "false")
@@ -32,7 +41,7 @@ const Drawer = () => {
   return (
     <div className="relative">
       {/* Navbar */}
-      <div className="fixed top-0 left-0 right-0 h-20 bg-gray-800 text-white flex items-center justify-between px-2 z-50 shadow-lg">
+      <div className="fixed top-0 left-0 right-0 h-12 bg-gray-800 text-white flex items-center justify-between px-2 z-50 shadow-lg">
         <div>
           <img src={Logo} className="w-36 object-cover" alt="Logo-Opsight" />
         </div>
@@ -47,7 +56,7 @@ const Drawer = () => {
       </div>
 
       {/* Always Open Drawer */}
-      <div className="fixed top-16 left-0 w-64 h-full bg-white text-black border-r-2">
+      {/* <div className="fixed top-16 left-0 w-64 h-full bg-white text-black border-r-2">
         <div className="p-6">
           <ul>
             <li className="mt-4">
@@ -150,10 +159,115 @@ const Drawer = () => {
             
           </ul>
         </div>
-      </div>
+      </div> */}
+
+{!shouldHideSidebar && (
+        <div className="fixed top-16 left-0 w-64 h-full bg-white text-black border-r-2">
+          <div className="p-6">
+            <ul>
+              <li className="mt-4">
+                <NavLink
+                  to="/"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <SiStatuspal /> Network Status
+                  </span>
+                </NavLink>
+              </li>
+              <li className="mt-6">
+                <NavLink
+                  to="/wifi-config"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <MdOutlineWifiPassword /> Wi-Fi Configuration
+                  </span>
+                </NavLink>
+              </li>
+              <li className="mt-6">
+                <NavLink
+                  to="/ip-config"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <MdLocationSearching /> IP Configuration
+                  </span>
+                </NavLink>
+              </li>
+              <li className="mt-6">
+                <NavLink
+                  to="/health-monitor"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <MdOutlineHealthAndSafety /> Health Monitoring
+                  </span>
+                </NavLink>
+              </li>
+              <li className="mt-6">
+                <NavLink
+                  to="/port-config"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <BsDisplayport /> Port Configuration
+                  </span>
+                </NavLink>
+              </li>
+              <li className="mt-6">
+                <NavLink
+                  to="/mqtt-connection"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <WifiOutlined /> MQTT Connection
+                  </span>
+                </NavLink>
+              </li>
+              <li className="mt-6">
+                <NavLink
+                  to="/gateway-protocols"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <GrGraphQl /> Connection Servers
+                  </span>
+                </NavLink>
+              </li>
+              <li className="mt-6">
+                <NavLink
+                  to="/admin-config"
+                  className={({ isActive }) =>
+                    isActive ? "text-blue-400" : "text-black"
+                  }
+                >
+                  <span className="flex gap-2 items-center justify-start">
+                    <GrUserAdmin /> Admin Configuration
+                  </span>
+                </NavLink>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
-      <div className="ml-64 mt-16 p-4">
+      <div className={`${shouldHideSidebar ? "ml-0" : "ml-64"} mt-16 p-4`}>
         <Outlet />
       </div>
     </div>

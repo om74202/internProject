@@ -10,8 +10,8 @@ import AdminConfig from "../Pages/AdminConfig";
 import Login from "../Auth/Login";
 import MQTTConn from "../Pages/MQTTConn";
 import GatewayProtocols from "../Pages/GatewayProtocol";
-import App1 from "../Pages/Tags";
 import AddVariable from "../Pages/AddVariable";
+import Tags from "../Pages/Tags";
 
 const ProtectedRoute = ({ element }) => {
   // const isAuth = localStorage.getItem("isAuth") === "true";
@@ -66,10 +66,10 @@ const router = createBrowserRouter([
         path: "/admin-config",
         element: <AdminConfig />,
       },{
-        path:"/tags",
-        element:<App1/>
+        path:"/tags/:serverName",
+        element:<Tags/>
       },{
-        path:"/AddVariable",
+        path:"/AddVariable/:serverName",
         element:<AddVariable/>
       }
     ],

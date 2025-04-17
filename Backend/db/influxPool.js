@@ -121,3 +121,64 @@ process.on('SIGTERM', async () => {
 });
 
 module.exports = influxPool;
+
+
+
+
+
+
+
+const influxHost = 'http://localhost:8086';
+const orgID = process.env.local_OrgID;
+const token = process.env.TOKEN_LOCAL;
+const remoteAPIToken = process.env.TOKEN_LIVE;
+const remoteOrgID = process.env.remote_OrgID;
+const remoteURL = process.env.HOST_LIVE;
+const localBucketID = process.env.local_BucketID;
+const remoteBucketName = process.env.DB_LIVE;
+
+//Replication script to cloud
+// async function setupReplication() {
+//     try {
+//         // Step 1: Create Remote
+//         const remoteData = {
+//             allowInsecureTLS: false,
+//             description: 'Modbus Data Replication In TCM2 Press',
+//             name: 'Example TCM2 Press name',
+//             orgID: orgID,
+//             remoteAPIToken: remoteAPIToken,
+//             remoteOrgID: remoteOrgID,
+//             remoteURL: remoteURL,
+//         };
+
+//         console.log('Creating remote...');
+//         const remoteResponse = await axios.post(`${influxHost}/api/v2/remotes`, remoteData, {
+//             headers: {
+//                 Authorization: `Token ${token}`,
+//                 'Content-Type': 'application/json',
+//             },
+//         });
+//         const remoteID = remoteResponse.data.id;
+//         console.log('Remote created successfully with ID:', remoteID);
+
+//         // Step 2: Create Replication
+//         const replicationData = {
+//             name: 'Example replication stream  TCM2 Press',
+//             orgID: orgID,
+//             remoteBucketName: remoteBucketName,
+//             localBucketID: localBucketID,
+//             remoteID: remoteID,
+//         };
+
+//         console.log('Creating replication...');
+//         const replicationResponse = await axios.post(`${influxHost}/api/v2/replications`, replicationData, {
+//             headers: {
+//                 Authorization: `Token ${token}`,
+//                 'Content-Type': 'application/json',
+//             },
+//         });
+//         console.log('Replication created successfully:', replicationResponse.data);
+//     } catch (error) {
+//         console.error('Error setting up replication:', error.response ? error.response.data : error.message);
+//     }
+// }

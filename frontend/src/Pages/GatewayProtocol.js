@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import axios from "axios";
 import { GrGraphQl } from "react-icons/gr";
 import { useNavigate } from "react-router-dom";
+import { ServerListCard } from "../components/serverCard";
 
 const TabbedForms =  () => {
   const [activeTab, setActiveTab] = useState("opcua");
   const navigate= useNavigate();
 
   // OPCUA State Variables
-  const [endURL, setEndUrl] = useState("");
+  const [ip , setIp ] = useState("");
+  const [port , setPort ] = useState("")
+  const [endURL, setEndUrl] = useState(`opc.tcp://${ip}:${port}`);
+
   const [securityPolicy, setSecurityPolicy] = useState("None");
   const [securityMode, setSecurityMode] = useState("None");
   const [opcUsername, setOpcUsername] = useState("");
@@ -16,14 +20,33 @@ const TabbedForms =  () => {
   const [certificate, setCertificate] = useState(null);
   const [opcName, setOpcName] = useState("");
   const [connected,setConnected]=useState(false);
+  const [opcuaServers , setOpcuaServers] = useState([]);
+  const [count , setCount ] = useState(0)
 
-  const isAuthSelected = securityMode!=="None" || securityPolicy!=="None";
-  const isCertSelected = certificate !== null;
+  const getEndUrl = () => `opc.tcp://${ip}:${port}`;
+
+  useEffect(()=>{
+    setEndUrl(getEndUrl());
+  },[ip, port])
+
+
+  useEffect(() => {
+      const fetchServers = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`);
+          setOpcuaServers(response.data.map((item) => item.name));
+        } catch (error) {
+          console.error("Error fetching tags:", error);
+        }
+      };
+    
+      fetchServers();
+    }, [count]);
 
   const checkConnection=async()=>{
     try{
       const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/getTagsSub`, {
-        endUrl: endURL,
+        endUrl:getEndUrl(),
         nodeId:"RootFolder",
         securityPolicy:securityPolicy,
         securityMode:securityMode,
@@ -68,6 +91,7 @@ const TabbedForms =  () => {
     setLoading(true);
     setError("");
     setSuccessMessage("");
+    setCount(prev=>prev+1);
 
     let payload = {};
     let apiUrl = "";
@@ -132,8 +156,8 @@ const TabbedForms =  () => {
   };
 
   return (
-    <div className="h-auto mt-5 bg-white flex flex-col items-center justify-center">
-      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-3xl">
+    <div className=" bg-white flex flex-col items-center  justify-center">
+      <div className="bg-white shadow-lg rounded-lg p-2 w-screen  max-w-3xl">
         {/* Tabs */}
         <h1 className="text-3xl pb-5 font-bold border-b mb-5 flex items-center justify-start gap-2">
           {" "}
@@ -171,18 +195,29 @@ const TabbedForms =  () => {
         <form onSubmit={handleSubmit}>
           {/* OPCUA Form */}
           {activeTab === "opcua" && (
-            <div>
-              <h2 className="text-2xl mb-4">OPCUA Configuration</h2>
+            <div className="">
+              <h2 className="text-md mb-4">OPCUA Configuration</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label>ENDURL:</label>
+                  <label>IP</label>
                   <input
                     type="text"
-                    value={endURL}
-                    onChange={(e) => setEndUrl(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg"
+                    value={ip}
+                    onChange={(e) => setIp(e.target.value)}
+                    className="w-full px-4 py-1 border rounded-lg"
                     required
-                    placeholder="Enter ENDURL to connect"
+                    placeholder="Enter IP "
+                  />
+                </div>
+                <div>
+                  <label>Port</label>
+                  <input
+                    type="text"
+                    value={port}
+                    onChange={(e) => setPort(e.target.value)}
+                    className="w-full px-4 py-1 border rounded-lg"
+                    required
+                    placeholder="Enter Port number "
                   />
                 </div>
                 <div>
@@ -192,11 +227,6 @@ const TabbedForms =  () => {
                     onChange={(e) => {
                       const selectedPolicy = e.target.value;
                       setSecurityPolicy(selectedPolicy);
-                      if (selectedPolicy === "None") {
-                        setSecurityMode("None");
-                      } else {
-                        setSecurityMode("Sign");
-                      }
                     }}
                     className="w-full px-4 py-2 border rounded-lg"
                   >
@@ -204,18 +234,29 @@ const TabbedForms =  () => {
                     <option>Basic128Rsa15</option>
                     <option>Basic256</option>
                     <option>Basic256Sha256</option>
+                    <option>Aes128_Sha256_RsaOaep</option>
                   </select>
                 </div>
                 <div>
                   <label>Security Mode:</label>
                   <select
                     value={securityMode}
-                    onChange={(e) => setSecurityMode(e.target.value)}
+                    onChange={(e) =>{
+                      const selectedMode=e.target.value;
+                      setSecurityMode(selectedMode)
+                      if (selectedMode === "None") {
+                        setSecurityPolicy("None");
+                      }
+                    }}
                     className="w-full px-4 py-2 border rounded-lg"
                   >
-                    <option>None</option>
-                    <option>Sign</option>
-                    <option>Sign & Encrypt</option>
+                    {securityPolicy === "None" && (<><option>None</option></>)}
+                    {securityPolicy !== "None" && (
+      <>
+        <option>Sign</option>
+        <option>Sign & Encrypt</option>
+      </>
+    )}
                   </select>
                 </div>
                 <div>
@@ -226,7 +267,7 @@ const TabbedForms =  () => {
                     onChange={(e) => setOpcUsername(e.target.value)}
                     className="w-full px-4 py-2 border rounded-lg"
                     placeholder="Enter your Username"
-                    disabled={isCertSelected}
+                    disabled={certificate!==null}
                   />
                 </div>
                 <div>
@@ -237,7 +278,7 @@ const TabbedForms =  () => {
                     onChange={(e) => setOpcPassword(e.target.value)}
                     className="w-full px-4 py-2 border rounded-lg"
                     placeholder="Enter your Password"
-                    disabled={isCertSelected}
+                    disabled={certificate!==null}
                   />
                 </div>
                 <div>
@@ -257,7 +298,7 @@ const TabbedForms =  () => {
                     accept=".pem"
                     onChange={(e) => setCertificate(e.target.files[0])}
                     className="w-full px-4 py-2 border rounded-lg"
-                    disabled={isAuthSelected}
+                    disabled={securityPolicy!=="None" || opcUsername!=="" || opcPassword!=="" }
                   />
                 </div>
 
@@ -266,17 +307,12 @@ const TabbedForms =  () => {
                <div >
                <button type="button" className=' mt-6
       text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium
-       rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none
+       rounded-lg text-sm px-5 py-2.5 me-2  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none
         dark:focus:ring-blue-800
       'onClick={checkConnection} >{connected ? "connected" : "connect"}</button>
                </div>
 
-               <button onClick={()=>{navigate('/tags')}} type="button" className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4
-                focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 max-w-md dark:bg-green-600 dark:hover:bg-green-700
-                 dark:focus:ring-green-800"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-tags" viewBox="0 0 16 16">
-                   <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>
-                   <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1z"/>
-                 </svg>Browse Tags</button>
+               
             </div>
           )}
 
@@ -519,7 +555,7 @@ const TabbedForms =  () => {
 <button
             type="submit"
             className="mt-6 bg-blue-500 text-white py-2 px-4 rounded-lg"
-            disabled={loading}
+            disabled={!connected}
           >
             {loading ? "Submitting..." : "Submit"}
           </button>
@@ -534,6 +570,13 @@ const TabbedForms =  () => {
           <p className="mt-4 text-green-500 font-bold">{successMessage}</p>
         )}
         {error && <p className="mt-4 text-red-500 font-bold">{error}</p>}
+      </div><p className="text-md font-semibold text-gray-900 ">Server List</p>
+      <div>
+        {activeTab === "opcua" && opcuaServers.map((variable , index)=>{
+              return(
+                <ServerListCard  key={index} title={variable} />
+              )
+            })}
       </div>
     </div>
   );

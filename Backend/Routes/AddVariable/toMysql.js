@@ -112,6 +112,43 @@ toMysqlRoute.get('/opcuaData/:name', async (req, res) => {
     }
 });
 
+toMysqlRoute.delete('/deleteOpcua/:name', async (req, res) => {
+    try {
+        const { name } = req.params;
+        
+        const [result] = await pool.execute(`DELETE FROM opcua WHERE name ='${name}'`);
+
+        res.json({ message: 'Server  deleted', affectedRows: result.affectedRows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+
+toMysqlRoute.put('/updateOpcua/:name', async (req, res) => {
+    try {
+        const { endurl , securityMode , securityPolicy , username , password , certificate } = req.body;
+        const {name }= req.params
+        
+        const [result] = await pool.execute(
+            `UPDATE opcua 
+             SET endurl = ?, 
+                 securityMode = ?, 
+                 securityPolicy = ?, 
+                 username = ?, 
+                 password = ?, 
+                 certificate = ? 
+             WHERE name = ?`,
+            [endurl, securityMode, securityPolicy, username, password, certificate ?? null, name]
+          );
+        res.json({ message: 'Server  updated', affectedRows: result.affectedRows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
 
 // for tags 
 
