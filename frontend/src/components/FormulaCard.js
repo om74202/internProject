@@ -1,92 +1,41 @@
 import axios from "axios"
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import evaluateExpression from "./evalExpression";
 import AutocompleteInput from "./AutoCompleteInput";
 
-export const ListCard=({title})=>{
+
+export const ListCardFormula=({title})=>{
   const [isEditOpen , setIsEditOpen] = useState(false);
-  const [showMessage , setShowMessage] = useState(false)
-  const [variableName , setVariableName] = useState(title)
-  const [tagName , setTagName] = useState('');
+  const [formulaName , setFormulaName] = useState('')
   const [expression , setExpression] = useState("")
-  const [frequency , setFrequency] = useState("");
-  const [nodeId , setNodeId] = useState("");
+  const [frequency , setFrequency] = useState("")
   const [dataType , setDataType] = useState("")
   const {serverName} = useParams();
-  const [message , setMessage] = useState("");
-  const [tags,setTags] = useState([]);
+  const [variables , setVariables]=useState([])
 
 
   useEffect(() => {
-    const fetchTags = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/serverTags/${serverName}`);
-        setTags(response.data.map((item) => item.name));
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
+        setVariables(response.data.map((item) => item.name));
       } catch (error) {
-        console.error("Error fetching tags:", error);
+        console.error("Error fetching variables:", error);
       }
     };
   
-    fetchTags();
+    fetchData();
   }, []);
 
 
-  const fetchValue=async()=>{
-    try{const response1=await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`)
-    const endurl=response1.data.endurl
-    const username=response1.data.username
-    const password=response1.data.password
-    const securityPolicy=response1.data.securityPolicy
-    const securityMode=response1.data.securityMode
-    const response2=await axios.post(`${process.env.REACT_APP_BASE_URL}/fetchTag`,{
-      variable:{name:variableName , nodeId:nodeId},
-      endurl:endurl
-      ,username:username,
-      password:password,
-      securityMode:securityMode,
-      securityPolicy:securityPolicy,
-    })
-    const value=evaluateExpression(response2.data.data.value+expression)
-
-    if(response2.data.data.status==="good"){
-      setMessage(`Fetch successfull  Value:${value}`)
-    setShowMessage(true);
-    }else{
-      setMessage("Fetch Failed")
-      setShowMessage(true)
-    }
-    console.log(message)
-    
-    
-
-    }catch(e){
-      setMessage("Fetch Failed");
-      setShowMessage(true)
-    }
-  }
-
-  const fetchNodeId = async () => {
-    const response =  await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags/${tagName}`);
-
-      setNodeId(response.data.nodeId)
-    }
-
-    useEffect(()=>{
-      fetchNodeId();
-    },[tagName])
-
-
-    const saveVariable = async ()=>{
+    const saveFormula = async ()=>{
       try{
-          const response=await axios.put(`${process.env.REACT_APP_BASE_URL}/addVariable`,{
-            currentName:title,
-            newName:variableName,
-            nodeId:nodeId,
+          const response=await axios.put(`${process.env.REACT_APP_BASE_URL}/addFormula/update/${title}`,{
+            newName:formulaName,
             expression:expression,
             frequency:frequency,
-            nodeName:tagName,
-            createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+            createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            dataType:dataType
           })
           setIsEditOpen(false)
         
@@ -104,11 +53,13 @@ export const ListCard=({title})=>{
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/${title}`);
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addFormula/${title}`);
           console.log(response.data)
+          setFormulaName(response.data.name);
           setFrequency(response.data.frequency);
           setExpression(response.data.expression)
-          setTagName(response.data.nodeName)
+          setDataType(response.data.dataType)
+
         } catch (error) {
           console.error("Error fetching tags:", error);
         }
@@ -119,10 +70,11 @@ export const ListCard=({title})=>{
 
 
     const handleDelete=async()=>{
-        try{const response =await axios.delete(`${process.env.REACT_APP_BASE_URL}/addVariable/${title}`);
+        try{const response =await axios.delete(`${process.env.REACT_APP_BASE_URL}/addFormula/deleteFormula/${title}`);
         console.log("deleted ", response.data)
         }catch(e){
             console.log(e);
+            alert("delete unsucessful due to ",e);
         }
     }
 
@@ -156,34 +108,34 @@ export const ListCard=({title})=>{
   {isEditOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Edit Variable</h2>
+            <h2 className="text-xl font-bold mb-4">Edit Formula</h2>
 
-            <div className="mb-4">
-              <label className="block text-gray-700">Variable Name</label>
+            <div className="">
+              <label className="block text-gray-700">Formula Name</label>
               <input
-              value={variableName}
-              onChange={(e)=>{setVariableName(e.target.value)}}
+              value={formulaName}
+              onChange={(e)=>{setFormulaName(e.target.value)}}
               
                 type="text"
-                className="w-full px-4 py-2 border rounded-md mt-2"
-                placeholder="Enter Expression"
+                className="w-full px-4 py-2 border rounded-md "
+                placeholder="Enter Formula Name"
               />
             </div>
-            <AutocompleteInput suggestions={tags} value={tagName}  onSelect={(value)=>{setTagName(value)}} placeholder={"Select Tag"}/>
-
-            <div className="mb-4">
-              <label className="block text-gray-700">Expression</label>
+            <div className="">
+              <label className="block text-gray-700">Formula</label>
               <input
               value={expression}
               onChange={(e)=>{setExpression(e.target.value)}}
               
                 type="text"
-                className="w-full px-4 py-2 border rounded-md mt-2"
+                className="w-full px-4 py-2  border rounded-md mt-2"
                 placeholder="Enter Expression"
               />
             </div>
+            <AutocompleteInput suggestions={variables} onSelect={(value)=>{setExpression((prev)=>prev+value)}} placeholder={"Select Variable"} setEmpty={true}/>
 
-            <div className="mb-4">
+
+            <div className="">
               <label className="block text-gray-700">Frequency </label>
               <input
               value={frequency}
@@ -192,21 +144,24 @@ export const ListCard=({title})=>{
                 className="w-full px-4 py-2 border rounded-md mt-2"
                 placeholder="Enter Frequency"
               />
-
-<button
-               onClick={fetchValue} className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-md"
-              >
-                fetch Data
-              </button>
-              {showMessage && (<div className="bg-green-500">
-                {message}
-              </div>)}
             </div>
-
+            <label className="block text-gray-700">DataType</label>
+               <select
+  value={dataType}
+  onChange={(e) => setDataType(e.target.value)}
+  className="w-full px-4 py-2 border rounded-md mt-2"
+>
+  <option value="">Select Data Type</option>
+  <option value="int">Integer (int)</option>
+  <option value="float">Float</option>
+  <option value="string">String</option>
+  <option value="boolean">Boolean</option>
+  <option value="datetime">DateTime</option>
+</select>
             
             
             <div className="flex justify-between">
-              <button onClick={saveVariable}
+              <button onClick={saveFormula}
                 className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-md"
               >
                 Submit

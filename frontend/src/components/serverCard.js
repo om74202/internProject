@@ -143,7 +143,7 @@ export const ServerListCard=({title , onDelete})=>{
       }
     
     return (
-        <div class="w-screen max-h-10   rounded-xl shadow-md overflow-hidden md:max-w-xl  m-2">
+        <div class="w-screen max-h-10   rounded-xl shadow-md overflow-hidden md:max-w-4xl  m-2">
   {/* <!-- Card Header with Icons --> */}
   <div class="flex justify-between items-center p-4 bg-green-100 hover:bg-green-200 border-b">
     <h3 class="text-md font-semibold text-gray-900">{title}</h3>

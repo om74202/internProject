@@ -1,6 +1,8 @@
 import React from "react";
 import { BsDisplayport } from "react-icons/bs";
 import { GrGraphQl, GrUserAdmin } from "react-icons/gr";
+import { useState } from "react";
+
 import {
   MdJoinFull,
   MdJoinLeft,
@@ -22,6 +24,13 @@ import { LinkOutlined, WifiOutlined } from "@ant-design/icons";
 </svg>
 
 const Drawer = () => {
+
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+const toggleSidebar = () => {
+  setIsSidebarVisible(!isSidebarVisible);
+};
+
 
   const navigate = useNavigate()
   const location = useLocation();
@@ -46,6 +55,13 @@ const shouldHideSidebar = hiddenRoutes.some((routePattern) =>
           <img src={Logo} className="w-36 object-cover" alt="Logo-Opsight" />
         </div>
         <div className="flex items-center justify-center gap-5  mr-5">
+        <button
+  onClick={toggleSidebar}
+  className="text-white bg-gray-700 px-3 py-1 rounded hover:bg-gray-600"
+>
+  {isSidebarVisible ? "Hide Sidebar" : "Show Sidebar"}
+</button>
+
           <button onClick={handleSignOut} className="flex gap-2 items-center justify-center focus:outline-none text-gray-300 hover:text-gray-400">
             <span className="text-2xl">
               <BiLogOut />
@@ -161,7 +177,7 @@ const shouldHideSidebar = hiddenRoutes.some((routePattern) =>
         </div>
       </div> */}
 
-{!shouldHideSidebar && (
+{!shouldHideSidebar && isSidebarVisible && (
         <div className="fixed top-16 left-0 w-64 h-full bg-white text-black border-r-2">
           <div className="p-6">
             <ul>
@@ -233,7 +249,7 @@ const shouldHideSidebar = hiddenRoutes.some((routePattern) =>
                   }
                 >
                   <span className="flex gap-2 items-center justify-start">
-                    <WifiOutlined /> MQTT Connection
+                    <WifiOutlined /> External Connection
                   </span>
                 </NavLink>
               </li>
@@ -245,7 +261,7 @@ const shouldHideSidebar = hiddenRoutes.some((routePattern) =>
                   }
                 >
                   <span className="flex gap-2 items-center justify-start">
-                    <GrGraphQl /> Connection Servers
+                    <GrGraphQl /> Edge Connectivity
                   </span>
                 </NavLink>
               </li>
@@ -267,9 +283,12 @@ const shouldHideSidebar = hiddenRoutes.some((routePattern) =>
       )}
 
       {/* Main Content */}
-      <div className={`${shouldHideSidebar ? "ml-0" : "ml-64"} mt-16 p-4`}>
-        <Outlet />
-      </div>
+      <div
+  className={`${shouldHideSidebar || !isSidebarVisible ? "ml-0" : "ml-64"} mt-16 p-4`}
+>
+  <Outlet />
+</div>
+
     </div>
   );
 };

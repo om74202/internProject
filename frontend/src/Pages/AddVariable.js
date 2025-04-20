@@ -2,17 +2,23 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import AutocompleteInput from "../components/AutoCompleteInput";
 import { ListCard } from "../components/card";
-import { secureHeaders } from "hono/secure-headers";
 import MultiSelectDropdown from "../components/multipleSelectDropdown";
 import Label from "../components/label";
 import TagTable from "../components/VariableTable";
+import { useParams } from "react-router-dom";
+import evaluateExpression from "../components/evalExpression";
+import { useSearchParams } from 'react-router-dom';
 const AddVariable=()=>{
   
 
   const [tag,setTag] = useState([]);
-  const [serverNames , setServerNames] = useState([]);
-  const [dataLoggingServers  , setDataLoggingServers] =useState(serverNames)
-  const [selectedServerName , setSelectedServerName] = useState("")
+  
+
+const [searchParams] = useSearchParams();
+const freq = searchParams.get('freq'); // "1000"
+  const [dataLoggingServers  , setDataLoggingServers] =useState()
+  const {serverName}= useParams()
+  const [serverData , setServerData] = useState()
   const [selectedTag , setSelectedTag] = useState("");
   const [variables, setVariables] = useState([]);
   const [variableSearchTerm , setVariableSearchTerm] = useState("")
@@ -24,29 +30,146 @@ const AddVariable=()=>{
   const [showExpressionList , setShowExpressionList] = useState(false);
   const [filteredVariables , setFilteredVariables] = useState([]);
   const [expressionVariable , setExpressionVariable] = useState("");
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+
 
   // for error 
   const [error , setError] = useState(false);
   const wrapperRef = useRef(null);
 
-  useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`);
-        setServerNames(response.data.map((item) => item.name));
-      } catch (error) {
-        console.error("Error fetching tags:", error);
-      }
-    };
+
+
+
+
+  const [rows, setRows] = useState([]);
+    const [newRow, setNewRow] = useState({
+      value:'',
+      expression:'',
+      variableName:'',
+      tagName: '',
+      status: '',
+      subscriptionRate: freq,
+      dataType: '',
+    });
+    // const handleFetchTags=async()=>{
+    //   rows.map((row,index)=>{
+        
+        
+    //   })
+    // }
+
   
-    fetchTags();
-  }, []);
+      const fetchNodeId = async () => {
+        const response =  await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags/${newRow.tagName}`);
+        console.log(newRow.tagName)
+
+          return {
+            name: newRow.variableName,
+            nodeId: response.data.nodeId
+          };
+        }
+        useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (e.key === 'Delete' && selectedRowIndex !== null) {
+              setRows((prevRows) => prevRows.filter((_, index) => index !== selectedRowIndex));
+              setSelectedRowIndex(null);
+            }
+          };
+        
+          window.addEventListener('keydown', handleKeyDown);
+          return () => window.removeEventListener('keydown', handleKeyDown);
+        }, [selectedRowIndex]);
+        
+     
+
+
+  //Table functions 
+  const handleInputChange = (e) => {
+    setNewRow({ ...newRow, [e.target.name]: e.target.value });
+  };
+
+  const addRow = async() => {
+    
+    const { variableName, tagName, subscriptionRate, expression } = newRow;
+
+  if (!variableName || !tagName) return alert("Variable name and Tag name are required");
+  try{
+    const nameNodeId=await fetchNodeId();
+    console.log(nameNodeId)
+    const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`);
+    const endurl=response.data.endurl
+    const securityMode=response.data.securityMode
+    const securityPolicy = response.data.securityPolicy
+    const username= response.data.username
+    const password=response.data.password
+    const response2=await axios.post(`${process.env.REACT_APP_BASE_URL}/fetchTag`,{
+      variable:nameNodeId,
+      endurl:endurl
+      ,username:username,
+      password:password,
+      securityMode:securityMode,
+      securityPolicy:securityPolicy,
+    })
+    const value =evaluateExpression(response2.data.data.value+expression)
+    console.log(value)
+
+    const newRowData = {
+      value: value,   // Adjust based on the structure of response2.data
+      variableName: variableName,
+      tagName: tagName,
+      status: response2.data.data.status, // Adjust based on the structure of response2.data
+      subscriptionRate: subscriptionRate,
+      dataType: response2.data.data.dataType,
+      expression:expression,
+      tagID:nameNodeId.nodeId
+    };
+
+    // Add the new row to the rows state
+    setRows((prevRows) => [...prevRows, newRowData]);
+    
+  }catch(e){
+    console.log(e)
+  }finally{
+    setNewRow({
+      value:'',
+        variableName:'',
+        expression:'',
+      tagName: '',
+      status: '',
+      subscriptionRate: freq,
+      dataType: '',
+    });
+  }
+  
+  };
+
+
+  const saveVariables = async ()=>{
+    try{
+      rows.map(async(row,index)=>{
+        const response=await axios.post(`${process.env.REACT_APP_BASE_URL}/addVariable`,{
+          name:row.variableName,
+          nodeId:row.tagID,
+          dataType:row.dataType,
+          expression:row.expression,
+          serverName:serverName,
+          frequency:row.subscriptionRate,
+          nodeName:row.tagName,
+          createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        })
+      })
+      alert("Variables Added Successfully")
+      setRows([]);
+    }catch(e){
+      alert("internal Server error")
+    }
+  }
 
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
         setVariables(response.data.map((item) => item.name));
       } catch (error) {
         console.error("Error fetching variables:", error);
@@ -59,7 +182,7 @@ const AddVariable=()=>{
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/serverTags/${serverName}`);
         setTag(response.data.map((item) => item.name));
       } catch (error) {
         console.error("Error fetching tags:", error);
@@ -112,7 +235,7 @@ const AddVariable=()=>{
       name: selectedVariable,
       tag: selectedTag,
       nodeId:nodeId,
-      serverName:selectedServerName,
+      serverName:serverName,
       expression: expression,
       dataType: dataType,
       createdAt: new Date().toISOString().slice(0, 19).replace("T", " ")
@@ -156,10 +279,7 @@ const AddVariable=()=>{
     }
     })
   }
-
-
-
-  const handleCloudDataLog = async ()=>{
+const handleCloudDataLog = async ()=>{
     try{
 
       const socket = new WebSocket('ws://localhost:3001'); // adjust the port
@@ -197,27 +317,124 @@ socket.onclose = () => {
     }
   }
 
-  const handledropdown = (selectedOptions) => {
-    console.log("Selected:", selectedOptions);
-    setDataLoggingServers(selectedOptions)
-  };
+
 
     return (
-      <div className="">
+      <div className="mt-0 pt-0">
+        
+        <div className=" min-w-screen mx-auto">
+      <h2 className="text-xl font-bold ">Add Variables</h2>
+
+      {/* Table */}
+      <table className="min-w-full border border-gray-300 rounded-md">
+        <thead className="bg-gray-100">
+          <tr>
+          <th className="border ">Variable Name</th>
+            <th className="border ">Tag Name</th>
+            <th className="border ">Tag ID</th>
+            <th className="border ">Subscription Rate</th>
+            <th className="border ">Scaling</th>
+            <th className="border ">DataType</th>
+            <th className="border ">Value</th>
+            <th className="border ">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan="4" className="text-center p-3 text-gray-500">Click Add Rows to add Rows</td>
+            </tr>
+          ) : (
+            rows.map((row, index) => (
+              <tr
+              key={index}
+              className={`hover:bg-gray-50 cursor-pointer ${selectedRowIndex === index ? 'bg-blue-100' : ''}`}
+              onClick={() => setSelectedRowIndex(index)}
+            >
+                <td className="border ">{row.variableName}</td>
+                <td className="border ">{row.tagName}</td>
+                <td className="border ">{row.tagID}</td>
+                <td className="border ">{row.subscriptionRate}</td>
+                <td className="border ">{row.expression}</td>
+                <td className="border ">{row.dataType}</td>
+                <td className="border ">{row.value}</td>
+                <td className="border ">{row.status}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+
+      {/* Input Form */}
+      <div className="mt-5 grid grid-cols-1 sm:grid-cols-6 gap-4">
+        
+      <input
+          name="variableName"
+          placeholder="Variable Name"
+          value={newRow.variableName}
+          onChange={handleInputChange}
+          className="border max-h-10 p-2 rounded"
+        />
         <div>
-          <TagTable/>
+        <AutocompleteInput placeholder={"Tag Name"}  suggestions={tag} onSelect={(value) => setNewRow(prev => ({ ...prev, tagName: value }))} 
+ />
         </div>
+
+       
+        <input
+        type="number"
+          name="subscriptionRate"
+          placeholder="Subscription Rate"
+          value={newRow.subscriptionRate}
+          onChange={handleInputChange}
+          className={`border max-h-10 p-2 rounded`}
+        />
+        <input
+          name="expression"
+          placeholder="Scaling"
+          value={newRow.expression}
+          onChange={handleInputChange}
+          className="border max-h-10 p-2 rounded"
+        />
+        {/* <AutocompleteInput placeholder={"Scaling"}  onSelect={(value)=>setNewRow(prev=>({...prev , expression:value}))}/> */}
+       
+        <button
+        onClick={addRow}
+        className=" bg-blue-600 max-h-10 text-white px-1 w-20 py-2 rounded hover:bg-blue-700"
+      >
+        Add Row
+      </button>
+      <button
+        onClick={saveVariables}
+        className=" bg-blue-600 max-h-10 text-white px-2 py-2 rounded hover:bg-blue-700"
+      >
+        save Variables
+      </button>
+        
+      </div>
+
       
-    <div className="w-full">{variables.map((variable , index)=>{
+      <div>
+      
+      </div>
+      
+    </div>
+    {newRow.subscriptionRate<=500  && (<div className="text-red-400 flex justify-center ">Enter value more than 500</div>)}
+
+      
+    <div className="flex flex-col">
+      <div className="flex justify-center font-semibold">Saved Variables</div>
+      <div className="">{variables.map((variable , index)=>{
       return(
-        <ListCard  key={index} title={variable}/>
+        <ListCard  key={index}  title={variable} serverName={serverName}/>
       )
     })}
     </div>
     </div>
+    </div>
     
       )
-}
+    }
 
 export default AddVariable;
 

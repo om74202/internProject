@@ -228,7 +228,7 @@ const Tags=()=>{
         ${depth === 0 
           ? 'border rounded-2xl  shadow-sm ' 
           : ''
-        }
+        } text-xs
       `}
     >
       {nodes.map((node) => (
@@ -308,7 +308,7 @@ const Tags=()=>{
       console.log(e);
       const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
     setSocket(newSocket);
-    alert(e)
+    alert("Can't save Variables Already saved")
     }
   }
 
@@ -326,11 +326,11 @@ const Tags=()=>{
   <DndContext onDragEnd={handleDragEnd}>
 
     {/* Node Browser Sidebar */}
-    <div className="w-1/5 h-full bg-white shadow-md p- border-l overflow-auto">
-      <div className="space-y-4">
+    <div className="w-1/5 h-full bg-white shadow-md   overflow-auto">
+      <div className="">
 
         <div>
-          <h2 className="text-sm font-semibold  mt-4 mb-2">Browse Nodes</h2>
+          <h2 className="text-sm font-semibold">Browse Nodes</h2>
           <div className="">
             {nodes.length >= 0 ? renderNodes(nodes) : <p>No nodes loaded.</p>}
           </div>
@@ -340,9 +340,7 @@ const Tags=()=>{
     
     {/* Tag Table Section */}
     <DropZone  id="DropZone">
-    <div className="w-4/5  h-screen overflow-hidden p-4">
-
-    <input
+      {/* <div className='flex justify-end'> <input
   type="number"
   value={frequency}
   onChange={(e) => {
@@ -361,28 +359,58 @@ const Tags=()=>{
   }}
   placeholder="Enter subscription frequency in milliseconds"
   className="bg-slate-200 border rounded-lg h-9 border-gray-300 w-40 px-2"
-/>
+/></div> */}
+
+<div className="flex justify-end">
+  <input
+    list="frequency-options"
+    type="number"
+    value={frequency}
+    onChange={(e) => {
+      const inputVal = e.target.value;
+      setFrequency(inputVal);
+
+      const parsed = parseInt(inputVal, 10);
+      if (!isNaN(parsed) && parsed >= 500) {
+        setFrequency(parsed);
+        setShowError(false);
+        setError("");
+      } else {
+        setShowError(true);
+        setError("Enter a value more than 500ms");
+      }
+    }}
+    placeholder="Enter or select frequency (ms)"
+    className="bg-slate-200 border rounded-lg h-9 border-gray-300 w-40 px-2"
+  />
+  <datalist id="frequency-options">
+    <option value="600" />
+    <option value="1000" />
+    <option value="1500" />
+  </datalist>
+</div>
 
 {showError && (
-  <p className="text-red-500 text-sm mt-1">{error}</p>
+  <p className="flex justify-end text-red-500 text-sm mt-1">{error}</p>
 )}
+    <div className="w-5xl  h-screen overflow-hidden ">
 
 
     
       
-        <div className="h-full flex flex-col space-y-4">
-          <h1 className="text-2xl font-semibold mb-2">Selected Tags</h1>
+        <div className="h-full flex flex-col ">
+          <h1 className="text-xl font-semibold mb-1">Browsed Tags</h1>
           <div className="overflow-auto border rounded shadow-sm bg-white">
             <table className="min-w-full text-sm text-left">
               <thead className="sticky top-0 bg-gray-200 z-10">
                 <tr>
-                  <th className="px-4 py-2 border">S. No.</th>
-                  <th className="px-4 py-2 border">Node ID</th>
-                  <th className="px-4 py-2 border">Value</th>
-                  <th className="px-4 py-2 border">Data Type</th>
-                  <th className="px-4 py-2 border">Name</th>
-                  <th className="px-4 py-2 border">Status</th>
-                  <th className="px-4 py-2 border">Time_Stamp</th>
+                  <th className="px-4  border">S. No.</th>
+                  <th className="px-4  border">Node ID</th>
+                  <th className="px-4  border">Value</th>
+                  <th className="px-4  border">Data Type</th>
+                  <th className="px-4  border">Name</th>
+                  <th className="px-4  border">Status</th>
+                  <th className="px-4  border">Time_Stamp</th>
                 </tr>
               </thead>
               <tbody>
@@ -395,32 +423,39 @@ const Tags=()=>{
                       selectedRowId === tag.id ? 'bg-blue-100' : 'hover:bg-gray-100'
                     }`}
                   >{console.log(tag)}
-                    <td className="px-4 py-2 border">{index + 1}</td>
-                    <td className="px-4 py-2 border">{tag.id}</td>
-                    <td className="px-4 py-2 border">{tag.valueMag || 'N/A'}</td>
-                    <td className="px-4 py-2 border">{tag.dataType || 'Unknown'}</td>
-                    <td className="px-4 py-2 border">{tag.name}</td>
-                    <td className="px-4 py-2 border">{tag.status}</td>
-                    <td className="px-4 py-2 border">{tag.timestamp}</td>
+                    <td className="px-4  border">{index + 1}</td>
+                    <td className="px-4  border">{tag.id}</td>
+                    <td className="px-4  border">{tag.valueMag || 'N/A'}</td>
+                    <td className="px-4  border">{tag.dataType || 'Unknown'}</td>
+                    <td className="px-4  border">{tag.name}</td>
+                    <td className="px-4  border">{tag.status}</td>
+                    <td className="px-4  border">{tag.timestamp}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end space-x-2">
             <button
               type="button"
               onClick={saveTags}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 transition"
             >
              {showSavedMessage ? "Tags Saved" : "Save Tags"}
             </button>
             <button
-              onClick={() => navigate(`/AddVariable/${serverName}`)}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+              onClick={() => navigate(`/AddVariable/${serverName}/?freq=${frequency}`)}
+              className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
             >
               Add Variable
+            </button>
+
+            <button
+              onClick={() => navigate(`/FormulaBuilder/${serverName}`)}
+              className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
+            >
+              Add Formula
             </button>
           </div>
         </div>

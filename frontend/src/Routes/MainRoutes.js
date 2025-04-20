@@ -12,6 +12,7 @@ import MQTTConn from "../Pages/MQTTConn";
 import GatewayProtocols from "../Pages/GatewayProtocol";
 import AddVariable from "../Pages/AddVariable";
 import Tags from "../Pages/Tags";
+import FormulaBuilder from "../Pages/FormulaPage";
 
 const ProtectedRoute = ({ element }) => {
   // const isAuth = localStorage.getItem("isAuth") === "true";
@@ -71,6 +72,9 @@ const router = createBrowserRouter([
       },{
         path:"/AddVariable/:serverName",
         element:<AddVariable/>
+      },{
+        path:"/FormulaBuilder/:serverName",
+        element:<FormulaBuilder/>
       }
     ],
   },

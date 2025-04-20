@@ -12,6 +12,7 @@ const TabbedForms =  () => {
   const [ip , setIp ] = useState("");
   const [port , setPort ] = useState("")
   const [endURL, setEndUrl] = useState(`opc.tcp://${ip}:${port}`);
+  const [auth , setAuth] = useState('Anonymous')
 
   const [securityPolicy, setSecurityPolicy] = useState("None");
   const [securityMode, setSecurityMode] = useState("None");
@@ -156,14 +157,14 @@ const TabbedForms =  () => {
   };
 
   return (
-    <div className=" bg-white flex flex-col items-center  justify-center">
-      <div className="bg-white shadow-lg rounded-lg p-2 w-screen  max-w-3xl">
+    <div className=" bg-white flex flex-col items-center  justify-center max-w-4xl">
+      <div className=" bg-white   rounded-lg  w-full ">
         {/* Tabs */}
-        <h1 className="text-3xl pb-5 font-bold border-b mb-5 flex items-center justify-start gap-2">
+        <h1 className=" text-3xl pb-5 font-bold border-b mb-5 flex items-center justify-start gap-2">
           {" "}
-          <GrGraphQl />Connection Servers
+          <GrGraphQl />Edge Connectivity 
         </h1>
-        <div className="flex justify-around mb-6">
+        <div className=" flex justify-around mb-6">
           <button
             className={`px-4 py-2 font-medium ${
               activeTab === "opcua" ? "bg-blue-500 text-white" : "bg-gray-200"
@@ -196,121 +197,156 @@ const TabbedForms =  () => {
           {/* OPCUA Form */}
           {activeTab === "opcua" && (
             <div className="">
-              <h2 className="text-md mb-4">OPCUA Configuration</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label>IP</label>
-                  <input
-                    type="text"
-                    value={ip}
-                    onChange={(e) => setIp(e.target.value)}
-                    className="w-full px-4 py-1 border rounded-lg"
-                    required
-                    placeholder="Enter IP "
-                  />
-                </div>
-                <div>
-                  <label>Port</label>
-                  <input
-                    type="text"
-                    value={port}
-                    onChange={(e) => setPort(e.target.value)}
-                    className="w-full px-4 py-1 border rounded-lg"
-                    required
-                    placeholder="Enter Port number "
-                  />
-                </div>
-                <div>
-                  <label>Security Policy:</label>
-                  <select
-                    value={securityPolicy}
-                    onChange={(e) => {
-                      const selectedPolicy = e.target.value;
-                      setSecurityPolicy(selectedPolicy);
-                    }}
-                    className="w-full px-4 py-2 border rounded-lg"
-                  >
-                    <option>None</option>
-                    <option>Basic128Rsa15</option>
-                    <option>Basic256</option>
-                    <option>Basic256Sha256</option>
-                    <option>Aes128_Sha256_RsaOaep</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Security Mode:</label>
-                  <select
-                    value={securityMode}
-                    onChange={(e) =>{
-                      const selectedMode=e.target.value;
-                      setSecurityMode(selectedMode)
-                      if (selectedMode === "None") {
-                        setSecurityPolicy("None");
-                      }
-                    }}
-                    className="w-full px-4 py-2 border rounded-lg"
-                  >
-                    {securityPolicy === "None" && (<><option>None</option></>)}
-                    {securityPolicy !== "None" && (
+              <h2 className="text-md ">OPCUA Configuration</h2>
+              <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6 space-y-6">
+  <div className="grid grid-cols-2 gap-4">
+    {/* IP Address */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">IP Address</label>
+      <input
+        type="text"
+        value={ip}
+        onChange={(e) => setIp(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        placeholder="Enter IP"
+        required
+      />
+    </div>
+
+    {/* Port */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Port</label>
+      <input
+        type="text"
+        value={port}
+        onChange={(e) => setPort(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        placeholder="Enter Port"
+        required
+      />
+    </div>
+
+    {/* Security Policy */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Security Policy</label>
+      <select
+        value={securityPolicy}
+        onChange={(e) => setSecurityPolicy(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+      >
+        <option>None</option>
+        <option>Basic128Rsa15</option>
+        <option>Basic256</option>
+        <option>Basic256Sha256</option>
+        <option>Aes128_Sha256_RsaOaep</option>
+      </select>
+    </div>
+
+    {/* Security Mode */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Security Mode</label>
+      <select
+        value={securityMode}
+        onChange={(e) => {
+          const selectedMode = e.target.value;
+          setSecurityMode(selectedMode);
+          if (selectedMode === "None") setSecurityPolicy("None");
+        }}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+      >
+        {securityPolicy === "None" ? (
+          <option>None</option>
+        ) : (
+          <>
+            <option>Sign</option>
+            <option>Sign & Encrypt</option>
+          </>
+        )}
+      </select>
+    </div>
+
+    {/* Authentication */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Authentication Settings</label>
+      <select
+        value={auth}
+        onChange={(e) => setAuth(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+      >
+        <option>Anonymous</option>
+        <option>Username and Password</option>
+        <option>Certificate</option>
+      </select>
+    </div>
+
+    {/* Server Name */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Server Name</label>
+      <input
+        type="text"
+        value={opcName}
+        onChange={(e) => setOpcName(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+        placeholder="Enter unique server name"
+      />
+    </div>
+
+    {/* Username & Password Fields (Conditional) */}
+    {auth === "Username and Password" && (
       <>
-        <option>Sign</option>
-        <option>Sign & Encrypt</option>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <input
+            type="text"
+            value={opcUsername}
+            onChange={(e) => setOpcUsername(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            placeholder="Enter Username"
+            disabled={certificate !== null}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input
+            type="password"
+            value={opcPassword}
+            onChange={(e) => setOpcPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            placeholder="Enter Password"
+            disabled={certificate !== null}
+          />
+        </div>
       </>
     )}
-                  </select>
-                </div>
-                <div>
-                  <label>Username:</label>
-                  <input
-                    type="text"
-                    value={opcUsername}
-                    onChange={(e) => setOpcUsername(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg"
-                    placeholder="Enter your Username"
-                    disabled={certificate!==null}
-                  />
-                </div>
-                <div>
-                  <label>Password:</label>
-                  <input
-                    type="password"
-                    value={opcPassword}
-                    onChange={(e) => setOpcPassword(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg"
-                    placeholder="Enter your Password"
-                    disabled={certificate!==null}
-                  />
-                </div>
-                <div>
-                <label>Name of server:</label>
-                  <input
-                    type="text"
-                    value={opcName}
-                    onChange={(e) => setOpcName(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg"
-                    placeholder="Enter a unique name for the server"
-                  />
-                </div>
-                <div>
-                  <label>Certificate:</label>
-                  <input
-                    type="file"
-                    accept=".pem"
-                    onChange={(e) => setCertificate(e.target.files[0])}
-                    className="w-full px-4 py-2 border rounded-lg"
-                    disabled={securityPolicy!=="None" || opcUsername!=="" || opcPassword!=="" }
-                  />
-                </div>
 
-                
-              </div>
-               <div >
-               <button type="button" className=' mt-6
-      text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium
-       rounded-lg text-sm px-5 py-2.5 me-2  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none
-        dark:focus:ring-blue-800
-      'onClick={checkConnection} >{connected ? "connected" : "connect"}</button>
-               </div>
+    {/* Certificate Upload (Conditional) */}
+    {auth === "Certificate" && (
+      <div className="col-span-2">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Certificate (.pem)</label>
+        <input
+          type="file"
+          accept=".pem"
+          onChange={(e) => setCertificate(e.target.files[0])}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          disabled={securityPolicy !== "None" || opcUsername !== "" || opcPassword !== ""}
+        />
+      </div>
+    )}
+  </div>
+
+  {/* Connection Button */}
+  <div className="text-right">
+    <button
+      type="button"
+      onClick={checkConnection}
+      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      {connected ? "Connection Successful" : "Test Connection"}
+    </button>
+  </div>
+</div>
+
 
                
             </div>

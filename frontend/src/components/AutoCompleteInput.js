@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-const AutocompleteInput = ({ suggestions = [] , onSelect}) => {
+const AutocompleteInput = ({placeholder, suggestions = [] , onSelect ,setEmpty , value}) => {
   const [inputValue, setInputValue] = useState('');
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -41,6 +41,9 @@ const AutocompleteInput = ({ suggestions = [] , onSelect}) => {
     onSelect(suggestion);
     setInputValue(suggestion);
     setShowSuggestions(false);
+    if(setEmpty===true){
+      setInputValue('');
+    }
   };
 
   return (
@@ -50,8 +53,8 @@ const AutocompleteInput = ({ suggestions = [] , onSelect}) => {
         value={inputValue}
         onChange={handleInputChange}
         onFocus={() => setShowSuggestions(true)}
-        placeholder="Type to search..."
-        className="autocomplete-input bg-slate-200 border rounded-lg h-9 border-gray-300  w-full "
+        placeholder={placeholder}
+        className="autocomplete-input  bg-slate-200 border rounded-lg h-9 border-gray-300  max-w-1/2"
       />
       {/* //bg-red-50 border border-red-500 text-red-900 placeholder-red-700 text-sm rounded-lg focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 block w-full p-2.5 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500
        */}

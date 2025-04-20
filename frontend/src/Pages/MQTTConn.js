@@ -1,8 +1,131 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
+import MultiSelectDropdown from "../components/multipleSelectDropdown";
+
 
 const MQTTConfigurationForm = () => {
+  const [activeTab , setActiveTab] = useState("Influx Logging")
+  const [dataLoggingServers , setDataLoggingServers] = useState([])
+  const [serverNames , setServerNames] = useState([]);
+  const [formulas, setFormulas] = useState([]);
+
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`);
+        setServerNames(response.data.map((item) => item.name));
+      } catch (error) {
+        console.error("Error fetching tags:", error);
+      }
+    };
+  
+    fetchTags();
+  }, []);
+
+  const startReplication=async()=>{
+    try{
+      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/replication`)
+      console.log(response.data)
+    }catch(e){
+      alert("Replication Failed")
+    }
+  }
+
+  const handledropdown = (selectedOptions) => {
+    setDataLoggingServers(selectedOptions)
+  };
+  // Influx LOgging Page 
+  const handleDataLog = async ()=>{
+
+    dataLoggingServers.forEach(async (serverName)=>{
+      try{
+      const serverData = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`)
+    const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
+    const variableNameValue = response.data.map(item => ({
+      name: item.name,
+      nodeId: item.nodeId
+      ,expression:item.expression
+      ,frequency:item.frequency
+    }));
+    const response2 = await axios.post(`${process.env.REACT_APP_BASE_URL}/subscribeVariables` , {variables:variableNameValue
+      , endurl: serverData.data.endurl
+      , username : serverData.data.username , 
+      password : serverData.data.password ,
+      securePolicy : serverData.data.securityPolicy ,
+      securityMode : serverData.data.securityMode ,
+       certificate: serverData.data.certificate
+    })
+    const responseFormulas = await axios.get(`${process.env.REACT_APP_BASE_URL}/addFormula/onlyFormula/${serverName}`);
+
+setFormulas(responseFormulas.data.map((item) => ({
+  name: item.name,
+  expression: item.expression,
+  serverName: item.serverName
+})));
+
+
+        const response3 = await axios.post(`${process.env.REACT_APP_BASE_URL}/formulaLog` , {
+          formulas:responseFormulas.data
+        })
+
+    const wss=new WebSocket("ws://localhost:3001");
+    
+  }catch(e){
+      console.log(e);
+    }
+    })
+  }
+
+
+
+  const handleCloudDataLog = async ()=>{
+    try{
+
+      const socket = new WebSocket('ws://localhost:3001'); // adjust the port
+
+socket.onopen = () => {
+  console.log('Connected to cloud logging WebSocket');
+};
+
+socket.onmessage = async(event) => {
+  try {
+    const update = JSON.parse(event.data); 
+    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logdataCloud`,{
+      name:update.name,
+      value:update.value,
+      expression:update.expression
+    })
+
+    
+
+    // Send to cloud InfluxDB
+    
+
+  } catch (err) {
+    console.error('Invalid JSON from WebSocket:', event.data);
+  }
+};
+
+socket.onclose = () => {
+  console.log('Disconnected from backend WebSocket');
+};
+
+
+    }catch(e){
+      console.log(e);
+    }
+  }
+
+
+
+
+
+
+
+
   // Separate state variables for each input field
+
   const [brokerAddress, setBrokerAddress] = useState("");
   const [port, setPort] = useState("");
   const [username, setUsername] = useState("");
@@ -22,6 +145,7 @@ const MQTTConfigurationForm = () => {
       qos,
     };
 
+
     try {
       const response = await axios.post(
         // Enter API Connection URL 🔽
@@ -37,8 +161,65 @@ const MQTTConfigurationForm = () => {
   };
 
   return (
-    <div className="h-auto mt-5 bg-white flex items-center justify-center">
-      <form
+    <div className="h-auto mt-5 bg-white flex flex-col items-center justify-center">
+      <div className="">
+      <button
+            className={`px-4 mx-7 py-2 font-medium ${
+              activeTab === "Influx Logging" ? "bg-blue-500 text-white" : "bg-gray-200"
+            } rounded-lg`}
+            onClick={() => setActiveTab("Influx Logging")}
+          >
+            Opsight Gateway
+          </button>
+          <button
+            className={`px-4 mx-7 py-2 font-medium ${
+              activeTab === "Mqtt" ? "bg-blue-500 text-white" : "bg-gray-200"
+            } rounded-lg`}
+            onClick={() => setActiveTab("Mqtt")}
+          >
+            MQTT 
+          </button>
+          <button
+            className={`px-4 mx-7 py-2 font-medium ${
+              activeTab === "API" ? "bg-blue-500 text-white" : "bg-gray-200"
+            } rounded-lg`}
+            onClick={() => setActiveTab("API")}
+          >
+            API
+          </button>
+      </div>
+     <div>
+      {activeTab==="Influx Logging" && (
+        <div className="bg-white shadow-lg rounded-2xl mb-6 p-6 w-full max-w-lg space-y-4">
+        <label className="block text-gray-600 text-lg font-medium">
+          Select Servers for Data Logging
+        </label>
+        
+        <MultiSelectDropdown options={serverNames} onChange={handledropdown} />
+      
+        <div className="flex flex-col sm:flex-row gap-4 pt-2">
+          <button 
+            onClick={handleDataLog}
+            className="flex-1 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+          >
+            Log Data
+          </button>
+          <button 
+            onClick={startReplication}
+            className="flex-1 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+          >
+            Start Replication
+          </button>
+        </div>
+        <button 
+            className="flex-1 p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+          >
+            Stop DataLogging
+          </button>
+      </div>
+      
+      )}
+     {activeTab==="Mqtt" && (<form
         className="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg"
         onSubmit={handleSubmit}
       >
@@ -135,7 +316,8 @@ const MQTTConfigurationForm = () => {
         >
           Submit Configuration
         </button>
-      </form>
+      </form>)}
+     </div>
     </div>
   );
 };
