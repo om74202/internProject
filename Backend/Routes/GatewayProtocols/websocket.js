@@ -24,6 +24,23 @@ module.exports = function setupWebSocket(wss1) {
       console.log('WS1 client disconnected');
     });
   });
+  updatesEmitter.on('formula', async (ans) => {
+    const message = JSON.stringify(ans);
+    try{for (const ws of clients) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+        const name=ans.name;
+        let value=ans.value
+        if(isNaN(value)){
+          value=0;
+        }
+        influxPool.writeData('Formula' , name , value );
+        console.log("hiii data written")
+      }
+    }}catch(e){
+      console.log(e);
+    }
+  });
 
   updatesEmitter.on('data', async (update) => {
     const message = JSON.stringify(update);
@@ -34,13 +51,15 @@ module.exports = function setupWebSocket(wss1) {
         let value=update.value;
         const expression=update.expression;
         
-        value=await evaluateFormulaExpression(value+expression);
+        value=await evaluateExpression(value+expression);
         if(isNaN(value)){
           value=0;
         }
         influxPool.writeData('opcua_Data2' , name , value );
       }
     }
+
+    
   });
 };
 

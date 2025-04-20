@@ -64,9 +64,11 @@ getVariable2.post('/subscribe', async (req, res) => {
       });
 
       await client.connect(endurl);
-      session = await client.createSession(
-        username ? { userName: username, password } : { type: "anonymous" }
-      );
+      if(username!=="" ){
+        session = await client.createSession({ userName: username, password: password });
+    }else{
+        session = await client.createSession();
+    }
 
       activeSubscriptions.set(clientKey, {
         client,

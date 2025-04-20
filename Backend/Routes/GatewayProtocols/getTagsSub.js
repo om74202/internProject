@@ -14,7 +14,7 @@ module.exports = (wss) => {
     });
 
     getNodesSubRoute.post("/", async (req, res) => {
-        const { endUrl, nodeId, username, password, securityPolicy, securityMode , certificate , frequency } = req.body;
+        const { endUrl, nodeId, username, password, securityPolicy, securityMode , certificate , frequency=1000 } = req.body;
         
         // Security configuration
         const securityPolicyMap = {
@@ -50,8 +50,13 @@ module.exports = (wss) => {
                     endpointMustExist: true
                 });
                 
-                await client.connect(endUrl);
-                session = await client.createSession({ userName: username, password: password });
+                const response =await client.connect(endUrl);
+                console.log("hiii     ",response);
+                if(username!=="" ){
+                    session = await client.createSession({ userName: username, password: password });
+                }else{
+                    session = await client.createSession();
+                }
                 
                 // Store the client and session
                 activeSubscriptions.set(clientKey, {
@@ -80,7 +85,7 @@ module.exports = (wss) => {
                 if (!subscription) {
                     subscription = ClientSubscription.create(session, {
                         requestedPublishingInterval: frequency,
-                        requestedLifetimeCount: 100,
+                        requestedLifetimeCount: 20,
                         requestedMaxKeepAliveCount: 10,
                         maxNotificationsPerPublish: 10,
                         publishingEnabled: true,

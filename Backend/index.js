@@ -34,6 +34,11 @@ const loggingtoCloudRoute = require('./Routes/logData/loggingtoCloud');
 const getVariable2 = require('./Routes/GatewayProtocols/getVariablesSub2');
 const setupWebSocket = require('./Routes/GatewayProtocols/websocket');
 const updatesEmitter = require('./Routes/updatesEmitter');
+const fetchTagRoute = require('./Routes/GatewayProtocols/fetchTags');
+const toMysqlRoute2 = require('./Routes/AddVariable/toMysql2');
+const toMysqlFormulaRoute = require('./Routes/AddVariable/toMysqlFormuls');
+const getVariable3 = require('./Routes/GatewayProtocols/getVariablesSub3');
+const ReplicationRouter = require('./Routes/logData/StartReplication');
 
 
 const app = express();
@@ -84,6 +89,7 @@ app.use("/mqtt-connection",postMqttConfigRoute);
 
 app.use("/isConnected/",connectOpcuaRoute);
 app.use("/getTagsSub", getNodesSubRoute(wss));
+app.use("/fetchTag" , fetchTagRoute);
 
 app.use("/modbus",modbusConfigRoute);
 // adding more opcua and ethernet
@@ -91,10 +97,13 @@ app.use("/modbus",modbusConfigRoute);
 
 // Add Variable
 app.use("/addVariable" , toMysqlRoute);
+app.use("/addFormula",toMysqlFormulaRoute);
 app.use("/logdata", loggingtoInfluxRoute);
 app.use("/logdataCloud" , loggingtoCloudRoute)
+app.use("/" , ReplicationRouter)
 
 app.use("/" , getVariable2);
+app.use('/', getVariable3);
 // setupWebSocket(server);
 
 // Admin Config

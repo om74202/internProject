@@ -1,7 +1,7 @@
 const pool = require("../../db/db");
 const express=require('express');
 
-const toMysqlRoute= express.Router()
+const toMysqlRoute2= express.Router()
 
 
 async function testPoolConnection() {
@@ -21,12 +21,12 @@ testPoolConnection();
 
 // for variables
 //POST 
-toMysqlRoute.post('/', async (req, res) => {
+toMysqlRoute2.post('/', async (req, res) => {
     try{
-        const { name, nodeId , expression , dataType , createdAt , serverName, frequency , nodeName} = req.body;
+        const { name, nodeId , expression , dataType , createdAt , serverName } = req.body;
     const [result] = await pool.execute(
-      'INSERT  INTO variables ( name , nodeId , expression , dataType , createdAt , serverName, frequency , nodeName) VALUES (?,?, ? , ? , ? , ?,?,?)',
-      [name ?? null, nodeId ?? null, expression ?? null, dataType ?? null, createdAt?? null , serverName , frequency , nodeName]
+      'INSERT  INTO variables ( name , nodeId , expression , dataType , createdAt , serverName ) VALUES (?,?, ? , ? , ? , ?)',
+      [name ?? null, nodeId ?? null, expression ?? null, dataType ?? null, createdAt?? null , serverName]
     );
     res.json({ id: result.insertId, name , nodeId });
 }catch(e){
@@ -34,52 +34,9 @@ toMysqlRoute.post('/', async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" , error:e})
 }
 });
-toMysqlRoute.put('/', async (req, res) => {
-    try {
-      const {
-        currentName,  // the existing name in DB to find the row
-        newName,      // the new name to update to
-        nodeId,
-        expression,
-        frequency,
-        nodeName,
-      } = req.body;
-  
-      const [result] = await pool.execute(
-        `UPDATE variables 
-         SET name = ?, 
-             nodeId = ?, 
-             expression = ?, 
-             frequency = ?, 
-             nodeName = ?
-         WHERE name = ?`,
-        [
-          newName,
-          nodeId ?? null,
-          expression ?? null,
-          frequency ?? null,
-          nodeName ?? null,
-          currentName
-        ]
-      );
-  
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Variable not found" });
-      }
-  
-      res.json({ message: "Variable updated successfully", updatedName: newName });
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ message: "Internal Server Error", error: e });
-    }
-  });
-//Update 
-
-  
-  
 
 // GET
-toMysqlRoute.get('/', async (req, res) => {
+toMysqlRoute2.get('/', async (req, res) => {
     try {
         const [variables] = await pool.execute('SELECT * FROM variables');
         res.json(variables);
@@ -89,9 +46,7 @@ toMysqlRoute.get('/', async (req, res) => {
     }
 });
 
-
-
-toMysqlRoute.get('/onlyVariable/:name', async (req, res) => {
+toMysqlRoute2.get('/onlyVariable/:name', async (req, res) => {
     try {
         const [variables] = await pool.execute(`SELECT * FROM variables WHERE serverName = "${req.params.name}"`);
         res.json(variables);
@@ -104,7 +59,7 @@ toMysqlRoute.get('/onlyVariable/:name', async (req, res) => {
 
 
 //Get for data sending and Replication
-toMysqlRoute.get('/variablesInfo' , async (req, res)=>{
+toMysqlRoute2.get('/variablesInfo' , async (req, res)=>{
     try{
         const [variableInfo] = await pool.execute(`SELECT variables.*, opcua.certificate , opcua.endurl,
              opcua.securityPolicy, opcua.securityMode, opcua.username, opcua.password FROM variables 
@@ -121,11 +76,11 @@ toMysqlRoute.get('/variablesInfo' , async (req, res)=>{
 // to give opcua servers
 
 // POST 
-toMysqlRoute.post('/opcuaData', async (req, res) => {
+toMysqlRoute2.post('/opcuaData', async (req, res) => {
     try{
         const { name, endurl , securityMode , securityPolicy , username , password , certificate  } = req.body;
     const [result] = await pool.execute(
-      'INSERT INTO opcua (name, endurl , securityMode , securityPolicy , username , password , certificate ) VALUES (?, ? , ? , ? , ? , ? , ?)',
+      'INSERT  INTO opcua (name, endurl , securityMode , securityPolicy , username , password , certificate ) VALUES (?, ? , ? , ? , ? , ? , ?)',
       [name , endurl , securityMode , securityPolicy , username , password , certificate]
     );
     res.json({ message:`${name} server created successfully`});
@@ -135,19 +90,17 @@ toMysqlRoute.post('/opcuaData', async (req, res) => {
 }
 });
 // GET
-toMysqlRoute.get('/opcuaData', async (req, res) => {
+toMysqlRoute2.get('/opcuaData', async (req, res) => {
     try {
-      const [servers] = await pool.execute('SELECT * FROM opcua');
-      console.log("Fetched servers:", servers); // 👈 check what's coming back
-      res.json(servers);
+        const [servers] = await pool.execute('SELECT * FROM opcua');
+        res.json(servers);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Internal Server Error" });
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-  });
-  
+});
 
-toMysqlRoute.get('/opcuaData/:name', async (req, res) => {
+toMysqlRoute2.get('/opcuaData/:name', async (req, res) => {
     try {
         const { name } = req.params;
         const [endpoint , fields] = await pool.execute(`SELECT * FROM opcua WHERE name ="${name}"`);
@@ -159,7 +112,7 @@ toMysqlRoute.get('/opcuaData/:name', async (req, res) => {
     }
 });
 
-toMysqlRoute.delete('/deleteOpcua/:name', async (req, res) => {
+toMysqlRoute2.delete('/deleteOpcua/:name', async (req, res) => {
     try {
         const { name } = req.params;
         
@@ -173,7 +126,7 @@ toMysqlRoute.delete('/deleteOpcua/:name', async (req, res) => {
 });
 
 
-toMysqlRoute.put('/updateOpcua/:name', async (req, res) => {
+toMysqlRoute2.put('/updateOpcua/:name', async (req, res) => {
     try {
         const { endurl , securityMode , securityPolicy , username , password , certificate } = req.body;
         const {name }= req.params
@@ -200,11 +153,11 @@ toMysqlRoute.put('/updateOpcua/:name', async (req, res) => {
 // for tags 
 
 
-toMysqlRoute.post('/tags' , async (req, res)=>{
+toMysqlRoute2.post('/tags' , async (req, res)=>{
     try{
         const { name, nodeId , dataType ,serverName } = req.body;
     const [result] = await pool.execute(
-      'INSERT  INTO tags ( name , nodeId , dataType , serverName ) VALUES (?, ? ,?, ?)',
+      'INSERT IGNORE INTO tags ( name , nodeId , dataType , serverName ) VALUES (?, ? ,?, ?)',
       [name ?? null, nodeId ?? null, dataType ?? null , serverName]
     );
     console.log("sucessfull   " , name)
@@ -219,7 +172,7 @@ toMysqlRoute.post('/tags' , async (req, res)=>{
 
 
 
-toMysqlRoute.get('/tags', async (req, res) => {
+toMysqlRoute2.get('/tags', async (req, res) => {
     try {
         const [tags] = await pool.execute('SELECT * FROM tags');
         res.json(tags);
@@ -231,21 +184,10 @@ toMysqlRoute.get('/tags', async (req, res) => {
 
 
 
-toMysqlRoute.get('/tags/:name', async (req, res) => {
+toMysqlRoute2.get('/tags/:name', async (req, res) => {
     try {
         const { name } = req.params;
-        const [tag , fields] = await pool.execute('SELECT * FROM tags WHERE name = ?', [name]);
-        res.json(tag[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-});
-
-toMysqlRoute.get('/ServerTags/:name', async (req, res) => {
-    try {
-        const { name } = req.params;
-        const [tag] = await pool.execute('SELECT * FROM tags WHERE ServerName = ?', [name]);
+        const tag = await pool.execute('SELECT * FROM tags WHERE name = ?', [name]);
         res.json(tag);
     } catch (error) {
         console.error(error);
@@ -255,10 +197,17 @@ toMysqlRoute.get('/ServerTags/:name', async (req, res) => {
 
 
 // ✅ Update a tag's `nodeId`
-toMysqlRoute.get('/:name', async (req, res) => {
+toMysqlRoute2.put('/:name', async (req, res) => {
     try {
-        const [variable , fields] = await pool.execute(`SELECT * FROM variables WHERE name='${req.params.name}'`);
-        res.json(variable[0]);
+        const { name } = req.params;
+        const { nodeId } = req.body;
+
+        const [result] = await pool.execute(
+            'UPDATE tags SET nodeId = ? WHERE name = ?', 
+            [nodeId, name]
+        );
+
+        res.json({ message: 'Variable updated', affectedRows: result.affectedRows });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal Server Error" });
@@ -266,7 +215,7 @@ toMysqlRoute.get('/:name', async (req, res) => {
 });
 
 // ✅ Delete a variable by name
-toMysqlRoute.delete('/:name', async (req, res) => {
+toMysqlRoute2.delete('/:name', async (req, res) => {
     try {
         const { name } = req.params;
         
@@ -279,6 +228,4 @@ toMysqlRoute.delete('/:name', async (req, res) => {
     }
 });
 
-
-
-module.exports = toMysqlRoute;
+module.exports = toMysqlRoute2;
