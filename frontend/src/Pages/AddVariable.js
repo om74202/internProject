@@ -8,6 +8,7 @@ import TagTable from "../components/VariableTable";
 import { useParams } from "react-router-dom";
 import evaluateExpression from "../components/evalExpression";
 import { useSearchParams } from 'react-router-dom';
+import { useLeavePrevention } from "../components/UnsavedChanges";
 const AddVariable=()=>{
   
 
@@ -21,22 +22,17 @@ const freq = searchParams.get('freq'); // "1000"
   const [serverData , setServerData] = useState()
   const [selectedTag , setSelectedTag] = useState("");
   const [variables, setVariables] = useState([]);
-  const [variableSearchTerm , setVariableSearchTerm] = useState("")
-  const [selectedVariable , setSelectedVariable] = useState("");
   const [expression, setExpression] = useState("");
-  const [socket , setSocket] = useState(null);
-  const [submitted , setSubmitted] = useState(false);
+  const [submitted , setSubmitted] = useState(false)
   // Expression list 
   const [showExpressionList , setShowExpressionList] = useState(false);
-  const [filteredVariables , setFilteredVariables] = useState([]);
-  const [expressionVariable , setExpressionVariable] = useState("");
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+  const [UnsavedChanges , setUnsavedChanges] = useState(false);
 
 
   // for error 
   const [error , setError] = useState(false);
   const wrapperRef = useRef(null);
-
 
 
 
@@ -213,110 +209,10 @@ const freq = searchParams.get('freq'); // "1000"
  
 
 
-  const handleVariableSearch = (e) => {
-    const value = e.target.value;
-    setVariableSearchTerm(value);
-    setError(false);
-    setSelectedVariable(value)
-  };
 
   const handleVariableClick = (variable) =>{
     setExpression((prev)=>(prev+variable))
   }
-
-
-  const handleSubmit = async () => {
-    try{
-      const tagInfo = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags/${selectedTag}`);
-      const dataType = tagInfo.data[0][0].dataType;
-      const nodeId = tagInfo.data[0][0].nodeId
-      console.log(nodeId, dataType)
-      const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/addVariable`,{
-      name: selectedVariable,
-      tag: selectedTag,
-      nodeId:nodeId,
-      serverName:serverName,
-      expression: expression,
-      dataType: dataType,
-      createdAt: new Date().toISOString().slice(0, 19).replace("T", " ")
-    }) 
-    console.log("sucess->",response.data)
-    setSubmitted(true);
-    return response.data;
-  }catch(e){
-    setError(true);
-    console.log(e);
-  }   
-  };
-
-
-
-  // Real time data logging logic to cloud and r pi using variableSub2.js
-  const handleDataLog = async ()=>{
-
-    dataLoggingServers.forEach(async (serverName)=>{
-      try{
-      const serverData = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`)
-    const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
-    const variableNameValue = response.data.map(item => ({
-      name: item.name,
-      nodeId: item.nodeId
-      ,expression:item.expression
-    }));
-    const response2 = await axios.post(`${process.env.REACT_APP_BASE_URL}/subscribe` , {variables:variableNameValue
-      , endurl: serverData.data.endurl
-      , username : serverData.data.username , 
-      password : serverData.data.password ,
-      securePolicy : serverData.data.securityPolicy ,
-      securityMode : serverData.data.securityMode ,
-       certificate: serverData.data.certificate
-    })
-
-    const wss=new WebSocket("ws://localhost:3001");
-    
-  }catch(e){
-      console.log(e);
-    }
-    })
-  }
-const handleCloudDataLog = async ()=>{
-    try{
-
-      const socket = new WebSocket('ws://localhost:3001'); // adjust the port
-
-socket.onopen = () => {
-  console.log('Connected to cloud logging WebSocket');
-};
-
-socket.onmessage = async(event) => {
-  try {
-    const update = JSON.parse(event.data); 
-    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logdataCloud`,{
-      name:update.name,
-      value:update.value,
-      expression:update.expression
-    })
-
-    
-
-    // Send to cloud InfluxDB
-    
-
-  } catch (err) {
-    console.error('Invalid JSON from WebSocket:', event.data);
-  }
-};
-
-socket.onclose = () => {
-  console.log('Disconnected from backend WebSocket');
-};
-
-
-    }catch(e){
-      console.log(e);
-    }
-  }
-
 
 
     return (

@@ -19,7 +19,7 @@ const TabbedForms =  () => {
   const [opcUsername, setOpcUsername] = useState("");
   const [opcPassword, setOpcPassword] = useState("");
   const [certificate, setCertificate] = useState(null);
-  const [opcName, setOpcName] = useState("");
+  const [opcName, setOpcName] = useState("UniqueName");
   const [connected,setConnected]=useState(false);
   const [opcuaServers , setOpcuaServers] = useState([]);
   const [count , setCount ] = useState(0)
@@ -147,6 +147,7 @@ const TabbedForms =  () => {
         `Configuration for ${activeTab} submitted successfully!`
       );
     } catch (err) {
+      alert("Please Provide a unique Name")
       console.error(`Error submitting ${activeTab} configuration:`, err);
       setError(
         `Failed to submit configuration for ${activeTab}. Please try again.`

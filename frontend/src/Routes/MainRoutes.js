@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import App from "../App";
 import NetworkStatus from "../Pages/Network";
@@ -20,10 +20,12 @@ const ProtectedRoute = ({ element }) => {
   return isAuth ? element : <Navigate to="/login" />;
 };
 
+
 const PublicRoute = ({ element }) => {
   const isAuth = localStorage.getItem("isAuth") === "true";
   return isAuth ? <Navigate to="/" /> : element;
 };
+
 
 // Define your routes
 const router = createBrowserRouter([

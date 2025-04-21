@@ -13,6 +13,10 @@ module.exports = (wss) => {
         });
     });
 
+    const isClientConnected = (client) => {
+        return client && client._secureChannel !== null;
+      };
+
     getNodesSubRoute.post("/", async (req, res) => {
         const { endUrl, nodeId, username, password, securityPolicy, securityMode , certificate , frequency=1000 } = req.body;
         
@@ -51,7 +55,7 @@ module.exports = (wss) => {
                 });
                 
                 const response =await client.connect(endUrl);
-                console.log("hiii     ",response);
+            
                 if(username!=="" ){
                     session = await client.createSession({ userName: username, password: password });
                 }else{
@@ -151,3 +155,5 @@ module.exports = (wss) => {
 
     return getNodesSubRoute;
 };
+
+

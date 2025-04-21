@@ -30,12 +30,11 @@ module.exports = function setupWebSocket(wss1) {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(message);
         const name=ans.name;
-        let value=ans.value
+        let value=ans.value;
         if(isNaN(value)){
           value=0;
         }
         influxPool.writeData('Formula' , name , value );
-        console.log("hiii data written")
       }
     }}catch(e){
       console.log(e);

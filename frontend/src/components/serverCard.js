@@ -37,6 +37,7 @@ export const ServerListCard=({title , onDelete})=>{
     const [name , setName ] = useState(title)
     const [connected , setConnected] = useState(false);
     const [message , setMessage ] = useState("")
+    const  [status , setStatus]=useState("Disconnected");
 
     const navigate = useNavigate();
 
@@ -46,6 +47,11 @@ export const ServerListCard=({title , onDelete})=>{
         setEndurl(getEndUrl());
       },[ip, port])
 
+      // status change 
+      useEffect(()=>{
+
+      },[status])
+
 
 
     useEffect(() => {
@@ -53,6 +59,7 @@ export const ServerListCard=({title , onDelete})=>{
           try {
             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${title}`);
             setData(response.data);
+            
             console.log(response);
           } catch (error) {
             console.error("Error fetching tags:", error);
@@ -66,7 +73,6 @@ export const ServerListCard=({title , onDelete})=>{
       useEffect(()=>{
         setIp(extractIp(endurl));
         setPort(extractPort(endurl));
-        console.log("hiiiiiiiiiiiiiii" , endurl , ip , port)
 
       },[endurl])
 
@@ -145,10 +151,16 @@ export const ServerListCard=({title , onDelete})=>{
     return (
         <div class="w-screen max-h-10   rounded-xl shadow-md overflow-hidden md:max-w-4xl  m-2">
   {/* <!-- Card Header with Icons --> */}
-  <div class="flex justify-between items-center p-4 bg-green-100 hover:bg-green-200 border-b">
-    <h3 class="text-md font-semibold text-gray-900">{title}</h3>
+  <div class="flex justify-between items-center  bg-green-100 hover:bg-green-200 border-b">
+    <h3 className="mb-2 text-md font-semibold text-gray-900">{title}</h3>
+    <button type="button" onClick={()=>{status==="Connected"? setStatus("Disconnected") : setStatus("Connected")}} className={`min-w-10  rounded-lg px-1 ${status==="Disconnected" ? " bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}>{status}</button>
+    
+    
+    
     <div class="flex space-x-2">
+
       {/* <!-- Edit Icon --> */}
+      
       <button onClick={handleBrowse}  class="text-blue-500 hover:text-blue-700 focus:outline-none">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-tags" viewBox="0 0 16 16">
 <path d="M3 2v4.586l7 7L14.586 9l-7-7zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586z"/>

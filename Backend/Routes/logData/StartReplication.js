@@ -7,7 +7,7 @@ const token = 'LpMc9MLzp8h-sUErT0WtmP5eIx88-vkki_vz5PjyRE5efhKkJp7z3OmPZo9G5uadJ
 const remoteAPIToken ='yKbpyW8gYlaHPn7cZBd-k3KhRrMLSPFFj1jiwsvv5tQgXWPNSMeXztL_L1H0y38_fan2YDYgUPRJ4LHZ7P-lmw==';
 const remoteOrgID = 'e0210721902225b0';
 const remoteURL = 'http://40.81.226.154:8086';
-const localBucketID = '44a6132d1ef62ddc';
+const localBucketID = 'be03b6124466c163';
 const remoteBucketName = 'Gateway_Test';
 
 const ReplicationRouter=express.Router();
@@ -30,7 +30,7 @@ async function setupReplication() {
         const remoteData = {
             allowInsecureTLS: false,
             description: 'Data Replicate In TCM2 Press',
-            name: remoteBucketName+localBucketID+token,
+            name: `LocalBucket:${localBucketID} | RemoteBucket:${remoteBucketName} | LocalURL:${influxHost} | RemoteURL:${remoteURL} |-${orgID} | ${remoteOrgID}`,
             orgID: orgID,
             remoteAPIToken: remoteAPIToken,
             remoteOrgID: remoteOrgID,
