@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 
-const MultiSelectDropdown = ({ options, onChange }) => {
+const MultiSelectDropdown = ({ options, onChange,preSelected=[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState([]);
   const dropdownRef = useRef(null);
 
   const toggleDropdown = () => setIsOpen(!isOpen);
+
+  useEffect(() => {
+    if (preSelected) {
+      setSelected(preSelected);
+    }
+  }, [preSelected]);
 
   const handleSelect = (option) => {
     const isSelected = selected.includes(option);

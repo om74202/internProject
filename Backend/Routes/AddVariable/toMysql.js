@@ -206,6 +206,28 @@ toMysqlRoute.put('/updateOpcua/:name', async (req, res) => {
     }
 });
 
+// alter the server status
+
+toMysqlRoute.put('/alterServerStatus/:name', async (req, res) => {
+    try {
+        const {status}=req.body
+        const {name }= req.params
+        
+        const [result] = await pool.execute(
+            `UPDATE opcua 
+             SET status=?
+             WHERE name = ?`,
+            [status , name]
+          );
+          if(result.affectedRows===0){
+            return res.status(404).json({message:"Server not found"})
+          }
+        res.json({ message: 'Server Status updated' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 
 // for tags 
 

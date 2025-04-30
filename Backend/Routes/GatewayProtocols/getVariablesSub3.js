@@ -220,6 +220,37 @@ getVariable3.post("/formulaLog", async (req, res) => {
 });
 
 
+getVariable3.post('/stopAllSubscriptions', async (req, res) => {
+  try {
+    const stopPromises = [];
+
+    for (const [clientKey, clientData] of activeSubscriptions.entries()) {
+      const { client, session, subscriptions } = clientData;
+
+      // Terminate all subscriptions
+      for (const subscription of subscriptions.values()) {
+        stopPromises.push(subscription.terminate());
+      }
+
+      // Close session and disconnect
+      stopPromises.push(session.close());
+      stopPromises.push(client.disconnect());
+
+      // Clean up map
+      activeSubscriptions.delete(clientKey);
+    }
+
+    await Promise.all(stopPromises);
+
+    res.json({ message: "All subscriptions and client sessions have been stopped and cleaned up." });
+  } catch (err) {
+    console.error("Error stopping all subscriptions:", err);
+    res.status(500).json({ error: "Failed to stop all subscriptions.", details: err.message });
+  }
+});
+
+
+
 module.exports = getVariable3;
 
 

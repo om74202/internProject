@@ -9,25 +9,26 @@ const pool  = require('../../db/db');
 
 const influxHost = 'http://100.118.162.109:8086';
 const orgID = '44a6132d1ef62ddc';
+const localBucketID = 'be03b6124466c163';
 const token = 'LpMc9MLzp8h-sUErT0WtmP5eIx88-vkki_vz5PjyRE5efhKkJp7z3OmPZo9G5uadJ6odpMfWjIfSE_wKHdxarQ==';
 const tokenf='nmGDpQblBVIwidHijv78LPksyh8f6b_qaGTqzCiH_-Pi63lYJOaKh5SQGvNTyWRife6Q8CDGYCx8oxul0hi0NA=='
 let remoteAPIToken ='yKbpyW8gYlaHPn7cZBd-k3KhRrMLSPFFj1jiwsvv5tQgXWPNSMeXztL_L1H0y38_fan2YDYgUPRJ4LHZ7P-lmw==';
 let remoteOrgID = 'e0210721902225b0';
 let remoteURL = 'http://40.81.226.154:8086';
-const localBucketID = 'be03b6124466c163';
+
 let remoteBucketName = 'Gateway_Test';
 
-// async function fetchData() {
-//     const [credentials]=await pool.execute(`SELECT * FROM vmdata WHERE id=1`);
-//         console.log(credentials[0])
-//         const data=credentials[0]
-//         remoteAPIToken=data.apiToken
-//         remoteOrgID=data.orgId
-//         remoteURL=data.url
-//         remoteBucketName=data.bucketName    
-//   }
+async function fetchData() {
+    const [credentials]=await pool.execute(`SELECT * FROM vmdata WHERE id=1`);
+        const data=credentials[0]
+        remoteAPIToken=data.apiToken
+        remoteOrgID=data.orgId
+        remoteURL=data.url
+        remoteBucketName=data.bucketName    
+        console.log("data updated for cloud")
+  }
   
-//   fetchData();
+  fetchData();
 
 const ReplicationRouter=express.Router();
 

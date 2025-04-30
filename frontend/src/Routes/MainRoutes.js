@@ -14,6 +14,9 @@ import AddVariable from "../Pages/AddVariable";
 import Tags from "../Pages/Tags";
 import FormulaBuilder from "../Pages/FormulaPage";
 
+
+
+
 const ProtectedRoute = ({ element }) => {
   // const isAuth = localStorage.getItem("isAuth") === "true";
   const isAuth = true;

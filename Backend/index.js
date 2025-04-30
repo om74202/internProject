@@ -39,6 +39,8 @@ const toMysqlRoute2 = require('./Routes/AddVariable/toMysql2');
 const toMysqlFormulaRoute = require('./Routes/AddVariable/toMysqlFormuls');
 const getVariable3 = require('./Routes/GatewayProtocols/getVariablesSub3');
 const ReplicationRouter = require('./Routes/logData/StartReplication');
+const axios = require('axios');
+const DataLogRouter = require('./Routes/logData/DataLog');
 
 
 const app = express();
@@ -85,6 +87,8 @@ app.use("/deletePort",deletePortRoute);
 
 // Mqtt config
 app.use("/mqtt-connection",postMqttConfigRoute);
+
+app.use('/',DataLogRouter);
 
 // Gateway Protocol
 app.use("/getTagsSub", getNodesSubRoute(wss));

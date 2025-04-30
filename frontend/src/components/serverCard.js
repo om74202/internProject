@@ -89,6 +89,7 @@ export const ServerListCard=({title , onDelete})=>{
           setSecurityMode(data.securityMode || "None");
           setSecurityPolicy(data.securityPolicy || "None");
           setName(title || "");
+          setStatus(data.status)
         }
       }, [data, title ]);
 
@@ -153,7 +154,7 @@ export const ServerListCard=({title , onDelete})=>{
   {/* <!-- Card Header with Icons --> */}
   <div class="flex justify-between items-center  bg-green-100 hover:bg-green-200 border-b">
     <h3 className="mb-2 text-md font-semibold text-gray-900">{title}</h3>
-    <button type="button" onClick={()=>{status==="Connected"? setStatus("Disconnected") : setStatus("Connected")}} className={`min-w-10  rounded-lg px-1 ${status==="Disconnected" ? " bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}>{status}</button>
+    <button type="button"  className={`min-w-10  rounded-lg px-1 ${status==="disconnected" ? " bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}>{status}</button>
     
     
     

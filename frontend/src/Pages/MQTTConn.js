@@ -11,10 +11,42 @@ const MQTTConfigurationForm = () => {
 
 
   useEffect(() => {
+    const updateServerStatuses = async () => {
+      try {
+        const responses = await Promise.all(
+          serverNames.map(async (serverName) => {
+            const isConnected = dataLoggingServers.includes(serverName);
+            const response = await axios.put(
+              `${process.env.REACT_APP_BASE_URL}/addVariable/alterServerStatus/${serverName}`,
+              { status: isConnected ? "connected" : "disconnected" }
+            );
+            return { serverName, status: response.status };
+          })
+        );
+  
+        console.log("All server status update responses:", responses);
+      } catch (e) {
+        alert("Internal Server Error");
+        console.error(e);
+      }
+    };
+  
+    if (serverNames.length > 0) {
+      updateServerStatuses();
+    }
+  }, [dataLoggingServers]);
+  
+  
+
+
+  useEffect(() => {
     const fetchTags = async () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData`);
         setServerNames(response.data.map((item) => item.name));
+        setDataLoggingServers(
+          response.data.filter(item => item.status === "connected").map(item => item.name)
+        );
       } catch (error) {
         console.error("Error fetching tags:", error);
       }
@@ -32,90 +64,93 @@ const MQTTConfigurationForm = () => {
     }
   }
 
-  const handledropdown = (selectedOptions) => {
-    setDataLoggingServers(selectedOptions)
-  };
+  
   // Influx LOgging Page 
-  const handleDataLog = async ()=>{
-
-    dataLoggingServers.forEach(async (serverName)=>{
-      try{
-      const serverData = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`)
-    const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
-    const variableNameValue = response.data.map(item => ({
-      name: item.name,
-      nodeId: item.nodeId
-      ,expression:item.expression
-      ,frequency:item.frequency
-    }));
-    const response2 = await axios.post(`${process.env.REACT_APP_BASE_URL}/subscribeVariables` , {variables:variableNameValue
-      , endurl: serverData.data.endurl
-      , username : serverData.data.username , 
-      password : serverData.data.password ,
-      securePolicy : serverData.data.securityPolicy ,
-      securityMode : serverData.data.securityMode ,
-       certificate: serverData.data.certificate
-    })
-    const responseFormulas = await axios.get(`${process.env.REACT_APP_BASE_URL}/addFormula/onlyFormula/${serverName}`);
-
-setFormulas(responseFormulas.data.map((item) => ({
-  name: item.name,
-  expression: item.expression,
-  serverName: item.serverName
-})));
 
 
-        const response3 = await axios.post(`${process.env.REACT_APP_BASE_URL}/formulaLog` , {
-          formulas:responseFormulas.data
-        })
-
-    const wss=new WebSocket("ws://localhost:3001");
-    
-  }catch(e){
-      console.log(e);
-    }
-    })
-  }
-
-
-
-  const handleCloudDataLog = async ()=>{
-    try{
-
-      const socket = new WebSocket('ws://localhost:3001'); // adjust the port
-
-socket.onopen = () => {
-  console.log('Connected to cloud logging WebSocket');
-};
-
-socket.onmessage = async(event) => {
+const handleDataLog = async () => {
   try {
-    const update = JSON.parse(event.data); 
-    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/logdataCloud`,{
-      name:update.name,
-      value:update.value,
-      expression:update.expression
-    })
-
-    
-
-    // Send to cloud InfluxDB
-    
-
-  } catch (err) {
-    console.error('Invalid JSON from WebSocket:', event.data);
+    const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/startDataLog`, {
+      servers: dataLoggingServers
+    });
+    console.log(response.data); // log any status or results
+  } catch (e) {
+    console.error('Error starting data log:', e);
   }
 };
 
-socket.onclose = () => {
-  console.log('Disconnected from backend WebSocket');
-};
 
+async function stopAllOpcuaSubscriptions() {
+  try {
+    const response = await fetch(`${process.env.REACT_APP_BASE_URL}/stopDataLog`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}) // Empty body as required
+    });
+    const response2 = await fetch(`${process.env.REACT_APP_BASE_URL}/stopAllSubscriptions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}) // Empty body as required
+    });
 
-    }catch(e){
-      console.log(e);
+    const result = await response.json();
+    if (response.ok) {
+      console.log("✅ Subscriptions stopped successfully:", result);
+    } else {
+      console.error("❌ Failed to stop subscriptions:", result);
     }
+  } catch (err) {
+    console.error("❌ Error sending stop request:", err.message);
   }
+}
+
+
+const handledropdown = (selectedOptions) => {
+  setDataLoggingServers(selectedOptions)
+};
+//   const handleDataLog = async ()=>{
+
+//     dataLoggingServers.forEach(async (serverName)=>{
+//       try{
+//       const serverData = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`)
+//     const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/onlyVariable/${serverName}`);
+//     const variableNameValue = response.data.map(item => ({
+//       name: item.name,
+//       nodeId: item.nodeId
+//       ,expression:item.expression
+//       ,frequency:item.frequency
+//     }));
+//     const response2 = await axios.post(`${process.env.REACT_APP_BASE_URL}/subscribeVariables` , {variables:variableNameValue
+//       , endurl: serverData.data.endurl
+//       , username : serverData.data.username , 
+//       password : serverData.data.password ,
+//       securePolicy : serverData.data.securityPolicy ,
+//       securityMode : serverData.data.securityMode ,
+//        certificate: serverData.data.certificate
+//     })
+//     const responseFormulas = await axios.get(`${process.env.REACT_APP_BASE_URL}/addFormula/onlyFormula/${serverName}`);
+
+// setFormulas(responseFormulas.data.map((item) => ({
+//   name: item.name,
+//   expression: item.expression,
+//   serverName: item.serverName
+// })));
+
+
+//         const response3 = await axios.post(`${process.env.REACT_APP_BASE_URL}/formulaLog` , {
+//           formulas:responseFormulas.data
+//         })
+
+//     const wss=new WebSocket("ws://localhost:3001");
+    
+//   }catch(e){
+//       console.log(e);
+//     }
+//     })
+//   }
+
+
+
 
 
 
@@ -195,7 +230,7 @@ socket.onclose = () => {
           Select Servers for Data Logging
         </label>
         
-        <MultiSelectDropdown options={serverNames} onChange={handledropdown} />
+        <MultiSelectDropdown options={serverNames} preSelected={dataLoggingServers} onChange={handledropdown} />
       
         <div className="flex flex-col sm:flex-row gap-4 pt-2">
           <button 
@@ -212,6 +247,7 @@ socket.onclose = () => {
           </button>
         </div>
         <button 
+        onClick={stopAllOpcuaSubscriptions}
             className="flex-1 p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
           >
             Stop DataLogging
