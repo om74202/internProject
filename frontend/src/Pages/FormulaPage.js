@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import AutocompleteInput from '../components/AutoCompleteInput';
 import { ListCardFormula } from '../components/FormulaCard';
+import { TrophyOutlined } from '@ant-design/icons';
+
 
 const FormulaBuilder = () => {
   // Available variables from your system
@@ -12,6 +14,9 @@ const FormulaBuilder = () => {
   const {serverName} = useParams();
   const [frequency , setFrequency] = useState('')
   const [formulas , setFormulas] = useState([]);
+  const [checkMessage , setCheckMessage] = useState(null)
+  const [enableSave , setEnableSave] = useState(false);
+  const [params , setParams]=useState([]);
 
   // User's formula input
   const [formula, setFormula] = useState('');
@@ -27,9 +32,70 @@ const FormulaBuilder = () => {
     };
 
 
+
   
     fetchData();
   }, []);
+
+  
+
+    const getFormulaInfo= async()=>{
+      const variableNames = [...new Set(
+        formula.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || []
+      )];
+    
+      let evaluatedFormula = formula; // copy formula to work on it
+      console.log(variableNames)
+    
+      if (variableNames.length > 0) {
+        // Fetch common server details once
+        const { data: serverData } = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/opcuaData/${serverName}`);
+        const { endurl, securityMode, securityPolicy, username, password } = serverData;
+    
+        try{for (const variable of variableNames) {
+          try {
+            const { data: variableData } = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/${variable}`);
+            const { name, nodeId } = variableData;
+    
+            const { data: tagData } = await axios.post(`${process.env.REACT_APP_BASE_URL}/fetchTag`, {
+              variable: { name, nodeId },
+              endurl,
+              securityMode,
+              securityPolicy,
+              username,
+              password,
+            });
+    let value;console.log("fetched result is ", tagData.data)
+            if(tagData.data.value){
+              value = tagData.data.value;
+            }else{
+              value = 0;
+            }
+    
+            // Safely replace only the exact variable name in formula
+            const regex = new RegExp(`\\b${variable}\\b`, 'g');
+            evaluatedFormula = evaluatedFormula.replace(regex, value);
+            console.log("Evaluated Formula is ",evaluatedFormula,value)
+            
+
+          }catch(e){
+            console.log(e)
+          }
+          
+        
+        }}catch(e){
+          setCheckMessage("Please check the formula and try again")
+        }
+        const result =eval(evaluatedFormula);
+        setCheckMessage(`The calculated value is ${result}`);
+        setEnableSave(true)
+        setParams(variableNames);
+
+      }
+    }
+
+
+
 
 
 
@@ -59,23 +125,22 @@ const FormulaBuilder = () => {
             frequency:frequency
         })
 
+        try{params.forEach(async(param)=>{
+          const response=await axios.put(`${process.env.REACT_APP_BASE_URL}/addVariable/setFormulaStatus/${param}`,{formula:name})
+        })}catch(e){
+          alert("Please Check the variables name");
+        }
+
         alert("variable saved Succesfully")
     }catch(e){
         alert("Please enter a unique name")
     }
   }
 
-
-
   
 
-
-
-  // Available math functions
-  const mathFunctions = ['sin', 'cos', 'tan', 'sqrt', 'log', 'abs'];
-
   return (
-    <div className=" max-w-5xl mx-auto">
+    <div className=" max-w-5xl ">
       <h1 className="text-2xl font-bold ">Custom Formula </h1>
       
       <div className="">
@@ -150,7 +215,16 @@ const FormulaBuilder = () => {
                <div>
                <button
         className="w-full px-4 py-2 border  mt-5  bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        onClick={getFormulaInfo}
+      >
+        Check Formula
+      </button>
+      {checkMessage!==null && <p className='text-green-500'>{checkMessage}</p>}
+               <button
+        className="w-full px-4 py-2 border  mt-5  bg-blue-600 text-white rounded-md hover:bg-blue-700"
         onClick={handleSave}
+        disabled={!enableSave}
+        
       >
         Save Formula
       </button>

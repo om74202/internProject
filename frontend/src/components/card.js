@@ -16,6 +16,36 @@ export const ListCard=({title})=>{
   const {serverName} = useParams();
   const [message , setMessage] = useState("");
   const [tags,setTags] = useState([]);
+  const fetchNodeId = async () => {
+    const response =  await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags/${tagName}`);
+
+      setNodeId(response.data.nodeId)
+      console.log("nodeid modified is ", response.data.nodeId)
+    }
+
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/${title}`);
+          console.log(response.data)
+          setFrequency(response.data.frequency);
+          setExpression(response.data.expression)
+          setNodeId(response.data.nodeId)
+          setTagName(response.data.nodeName)
+          console.log("nodeid is ",response.data.nodeId)
+        } catch (error) {
+          console.error("Error fetching tags:", error);
+        }
+      };
+    
+      fetchData();
+    }, []);
+
+    useEffect(()=>{
+      if(tagName!==""){
+        fetchNodeId();
+      }
+    },[tagName])
 
 
   useEffect(() => {
@@ -56,7 +86,6 @@ export const ListCard=({title})=>{
       setMessage("Fetch Failed")
       setShowMessage(true)
     }
-    console.log(message)
     
     
 
@@ -66,15 +95,7 @@ export const ListCard=({title})=>{
     }
   }
 
-  const fetchNodeId = async () => {
-    const response =  await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/tags/${tagName}`);
-
-      setNodeId(response.data.nodeId)
-    }
-
-    useEffect(()=>{
-      fetchNodeId();
-    },[tagName])
+  
 
 
     const saveVariable = async ()=>{
@@ -101,28 +122,15 @@ export const ListCard=({title})=>{
 
 
 
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/${title}`);
-          console.log(response.data)
-          setFrequency(response.data.frequency);
-          setExpression(response.data.expression)
-          setTagName(response.data.nodeName)
-        } catch (error) {
-          console.error("Error fetching tags:", error);
-        }
-      };
     
-      fetchData();
-    }, []);
 
 
     const handleDelete=async()=>{
         try{const response =await axios.delete(`${process.env.REACT_APP_BASE_URL}/addVariable/${title}`);
-        console.log("deleted ", response.data)
+        alert(response.data.message);
         }catch(e){
             console.log(e);
+            alert("delete unsucessful , variable is associated to a formula",)
         }
     }
 

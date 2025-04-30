@@ -31,7 +31,7 @@ const getNodesSubRoute = require('./Routes/GatewayProtocols/getTagsSub');
 const toMysqlRoute = require('./Routes/AddVariable/toMysql');
 const loggingtoInfluxRoute = require('./Routes/logData/loggingtoInflux');
 const loggingtoCloudRoute = require('./Routes/logData/loggingtoCloud');
-const getVariable2 = require('./Routes/GatewayProtocols/getVariablesSub2');
+const RetentionTagsRoute = require('./Routes/GatewayProtocols/getTagsSub2');
 const setupWebSocket = require('./Routes/GatewayProtocols/websocket');
 const updatesEmitter = require('./Routes/updatesEmitter');
 const fetchTagRoute = require('./Routes/GatewayProtocols/fetchTags');
@@ -50,6 +50,7 @@ app.use(cors());
 
 const wss1 = new WebSocket.Server({ noServer: true });
 const wss = new WebSocket.Server({ noServer: true });
+const wss2= new WebSocket.Server({noServer:true})
 
 
 
@@ -86,9 +87,8 @@ app.use("/deletePort",deletePortRoute);
 app.use("/mqtt-connection",postMqttConfigRoute);
 
 // Gateway Protocol
-
-app.use("/isConnected/",connectOpcuaRoute);
 app.use("/getTagsSub", getNodesSubRoute(wss));
+app.use("/RetentionTags" , RetentionTagsRoute(wss2))
 app.use("/fetchTag" , fetchTagRoute);
 
 app.use("/modbus",modbusConfigRoute);
@@ -102,7 +102,7 @@ app.use("/logdata", loggingtoInfluxRoute);
 app.use("/logdataCloud" , loggingtoCloudRoute)
 app.use("/" , ReplicationRouter)
 
-app.use("/" , getVariable2);
+// app.use("/" , getVariable2);
 app.use('/', getVariable3);
 // setupWebSocket(server);
 
@@ -142,10 +142,15 @@ server.listen(PORT, () => {
 
 
 server.on("upgrade", (req, socket, head) => {
-    if (req.url === "/getTagsSub") {  // Match WebSocket path
+    if (req.url === "/getTagsSub" ) {  // Match WebSocket path
         wss.handleUpgrade(req, socket, head, (ws) => {
             wss.emit("connection", ws, req);
         });
+    }else if(req.url==="/RetentionTags"){
+        wss2.handleUpgrade(req, socket, head, (ws) => {
+            wss2.emit("connection", ws, req);
+        });
+
     }else if (req.url==="/"){
         wss1.handleUpgrade(req, socket , head , (ws) =>{
             wss1.emit("connection" , ws , req)
@@ -154,5 +159,7 @@ server.on("upgrade", (req, socket, head) => {
         socket.destroy();  // Reject other upgrades
     }
 });
+
+
 
 setupWebSocket(wss1);

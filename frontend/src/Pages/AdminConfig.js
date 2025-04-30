@@ -1,4 +1,5 @@
 
+import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -12,8 +13,40 @@ const Dashboard = () => {
   const [isInfluxModalOpen , setIsInfluxModalOpen] = useState(false);
   const [influxUrl , setInfluxUrl] = useState("");
   const [influxToken , setInfluxToken] = useState("");
-  const [influxOrg , setInfluxOrg] = useState("")
-  const [influxBucket , setInfluxBucket] = useState("");
+  const [influxOrgId , setInfluxOrgId] = useState("")
+  const [influxBucketName , setInfluxBucketName] = useState("");
+
+  useEffect(()=>{
+    const fetchData=async()=>{
+      try{
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/getInfluxCredentials`)
+        setInfluxUrl(response.data.url)
+        setInfluxToken(response.data.apiToken);
+        setInfluxOrgId(response.data.orgId)
+        setInfluxBucketName(response.data.bucketName)
+        console.log("credentials fetch successfully")
+      }catch(e){
+        console.log("error in fetching cloud credentials")
+      }
+    }
+    fetchData()
+  },[])
+
+  const handleUpdateInfluxCredentials=async ()=>{
+    try{
+      const response = await axios.put(`${process.env.REACT_APP_BASE_URL}/addVariable/updateCloudInflux`,{
+        url:influxUrl,
+        apiToken:influxToken,
+        orgId:influxOrgId,
+        bucketName:influxBucketName
+      })
+      alert("Credentials updated successfully");
+      setIsInfluxModalOpen(false)
+      
+    }catch(e){
+      alert("Error in updating Credentials , Make sure you are connected to database");
+    }
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -215,38 +248,37 @@ const Dashboard = () => {
             <div className="mb-4">
               <label className="block text-gray-700">Token </label>
               <input
-                type="password"
+                type="text"
                 value={influxToken}
                 onChange={(e) => setInfluxToken(e.target.value)}
                 className="w-full px-4 py-2 border rounded-md mt-2"
-                placeholder="Enter new password"
+                placeholder="Enter new Token"
               />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700">Org Name</label>
               <input
-                type="password"
-                value={influxOrg}
-                onChange={(e) => setInfluxOrg(e.target.value)}
+                type="text"
+                value={influxOrgId}
+                onChange={(e) => setInfluxOrgId(e.target.value)}
                 className="w-full px-4 py-2 border rounded-md mt-2"
-                placeholder="Enter new password"
+                placeholder="Enter new Organization Id"
               />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700">Bucket Name</label>
               <input
-                type="password"
-                value={influxBucket}
-                onChange={(e) => setInfluxBucket(e.target.value)}
+                type="text"
+                value={influxBucketName}
+                onChange={(e) => setInfluxBucketName(e.target.value)}
                 className="w-full px-4 py-2 border rounded-md mt-2"
-                placeholder="Enter new password"
+                placeholder="Enter new Bucket Name"
               />
             </div>
             <div className="flex justify-between">
               <button
-                onClick={handleSubmitAuth}
+                onClick={handleUpdateInfluxCredentials}
                 className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-md"
-                disabled={username == '' || password == '' || password.length < 6}
               >
                 Submit
               </button>

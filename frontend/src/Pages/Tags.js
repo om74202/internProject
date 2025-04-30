@@ -20,6 +20,10 @@ import { useParams } from 'react-router-dom';
 
 
 
+
+
+
+
 //  drag and drop logic 
 
 
@@ -38,8 +42,13 @@ const Tags=()=>{
   const [expandedNodes, setExpandedNodes] = useState({});
   const [certificate , setCertificate] = useState(null);
   const [tags , setTags]=useState([]); 
+  const [nodeIds , setNodeIds]= useState([]);
   const [error , setError ] = useState("")
   const [socket , setSocket] = useState(null);
+  const [socket2,setSocket2]=useState(null)
+  const [savedTags , setSavedTags]=useState([])
+  const [showSavedTags , setShowSavedTags]=useState(false);
+  const [selectedSavedTag , setSelectedSavedTag]=useState(null)
   
 
   const [savedMessage , setSavedMessage] = useState("")
@@ -51,6 +60,42 @@ const Tags=()=>{
     const [frequency , setFrequency] = useState(1000)
     const [showError , setShowError] = useState(false)
 
+    useEffect(() => {
+      const fetchTags = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/serverTags/${serverName}`);
+          setNodeIds(response.data.map((item) => item.nodeId));
+          setSavedTags(response.data);
+        } catch (error) {
+          console.error("Error fetching tags:", error);
+        }
+        
+      };
+    
+      fetchTags();
+
+      
+    }, []);
+
+    useEffect(()=>{
+      const fetchRetentionTags= async()=>{
+        try{
+          const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/RetentionTags`,{
+            endUrl:endpoint,
+            nodeIds:nodeIds,
+            username:username,
+            password:password,
+            securityMode:securityMode,
+            securityPolicy:securityPolicy,
+            frequency:frequency
+          })
+        }catch(e){
+          console.log("error in fetching tags");
+        }
+      }
+      fetchRetentionTags();
+    },[endpoint])
+    
 
     useEffect(() => {
       const initializeServer = async () => {
@@ -93,6 +138,9 @@ const Tags=()=>{
     
       initializeServer();
     }, [serverName]);
+
+   
+
 
     useEffect(()=>{
       try{
@@ -141,7 +189,6 @@ const Tags=()=>{
 
   const handleRowClick = (id) => {
     setSelectedRowId(id);
-    console.log(id);
   };
 
 
@@ -172,7 +219,43 @@ const Tags=()=>{
     }
   };
 
-  
+  useEffect(() => {
+    const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/RetentionTags`);
+
+    newSocket.onopen = () => {
+      console.log("✅ WebSocket connected for saved tags");
+    };
+
+    newSocket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+
+      setSavedTags((prevTags) =>
+        prevTags.map((tag) =>
+          tag.nodeId === message.type // or tag.tagName if that's your identifier
+            ? {
+                ...tag,
+                id:message.data.id,
+                valueMag: message.data.value,
+                status: message.data.status,
+                dataType: message.data.dataType,
+                timestamp: message.data.timestamp,
+              }
+            : tag
+        )
+      );
+    };
+    console.log("saved tags ",savedTags)
+
+    newSocket.onclose = () => {
+      console.log("❌ WebSocket disconnected for saved tags");
+    };
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, []);
 
   useEffect(() => {
     const newSocket = new WebSocket(`${process.env.REACT_APP_BASE_URL}/getTagsSub`);
@@ -185,8 +268,8 @@ const Tags=()=>{
       const message = JSON.parse(event.data);
       setTags((prevTags) =>
         prevTags.map((tag) =>
-          tag.id === message.type ? { ...tag, valueMag: message.data.value , status:message.data.status , dataType:message.data.dataType , timestamp:message.data.timestamp} : tag,
-      // console.log("----->",message.type)
+          tag.id === message.type ? { ...tag,  valueMag: message.data.value , status:message.data.status , dataType:message.data.dataType , timestamp:message.data.timestamp} : tag,
+  
         )
       );
     };
@@ -195,7 +278,7 @@ const Tags=()=>{
       console.log("❌ WebSocket disconnected");
     };
 
-    setSocket(newSocket);
+    setSocket2(newSocket);
 
     return () => {
       newSocket.close();
@@ -231,6 +314,7 @@ const Tags=()=>{
         } text-xs
       `}
     >
+      {nodes.length===0 && <p className='text-center font-bold text-red-500 text-xl'>No nodes found</p>}
       {nodes.map((node) => (
         <li key={node.id} className="">
           <div 
@@ -256,7 +340,7 @@ const Tags=()=>{
                   <LinkOutlined className=" " />
                 )}
                 <span>
-                  {node.name}
+                {node.name}
                 </span>
               </div>
             </DraggableItem>
@@ -312,6 +396,26 @@ const Tags=()=>{
     }
   }
 
+  const handleTagDelete=async(id)=>{
+    setSelectedSavedTag(id);
+    const handleKeyDown = async(e) => {
+      if (e.key === 'Delete' && id !== null) {
+        try{
+          const response=await axios.delete(`${process.env.REACT_APP_BASE_URL}/addVariable/deleteTag/${id}/${serverName}`)
+          alert(response.data.message)
+          setSavedTags((prev)=>prev.filter((tag)=>tag.nodeId!==id))
+          setSelectedSavedTag(null)
+        }catch(e){
+          alert("Internal Server Error")
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    
+  }
+
 
 
   
@@ -329,7 +433,7 @@ const Tags=()=>{
     <div className="w-1/5 h-full bg-white shadow-md   overflow-auto">
       <div className="">
 
-        <div>
+        <div><h3 className='font-bold '>Server Name-{serverName}</h3>
           <h2 className="text-sm font-semibold">Browse Nodes</h2>
           <div className="">
             {nodes.length >= 0 ? renderNodes(nodes) : <p>No nodes loaded.</p>}
@@ -340,28 +444,10 @@ const Tags=()=>{
     
     {/* Tag Table Section */}
     <DropZone  id="DropZone">
-      {/* <div className='flex justify-end'> <input
-  type="number"
-  value={frequency}
-  onChange={(e) => {
-    const inputVal = e.target.value;
-    setFrequency(inputVal);
 
-    const parsed = parseInt(inputVal, 10);
-    if (!isNaN(parsed) && parsed >= 500) {
-      setFrequency(parsed);
-      setShowError(false)
-      setError("");
-    } else {
-      setShowError(true)
-      setError("Enter a value more than 500ms");
-    }
-  }}
-  placeholder="Enter subscription frequency in milliseconds"
-  className="bg-slate-200 border rounded-lg h-9 border-gray-300 w-40 px-2"
-/></div> */}
 
 <div className="flex justify-end">
+  <label className='font-semibold'>Browsing Frequency <span className='text-gray-500 text-sm'>in milliseconds</span> </label>
   <input
     list="frequency-options"
     type="number"
@@ -393,7 +479,7 @@ const Tags=()=>{
 {showError && (
   <p className="flex justify-end text-red-500 text-sm mt-1">{error}</p>
 )}
-    <div className="w-5xl  h-screen overflow-hidden ">
+    <div className="w-5xl   overflow-hidden ">
 
 
     
@@ -436,13 +522,19 @@ const Tags=()=>{
             </table>
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex  justify-end space-x-2">
             <button
               type="button"
               onClick={saveTags}
               className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 transition"
             >
              {showSavedMessage ? "Tags Saved" : "Save Tags"}
+            </button>
+            <button
+              onClick={() =>setShowSavedTags(!showSavedTags)}
+              className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition"
+            >
+              {showSavedTags ? "Hide Saved Tags":"Show Saved Tags"}
             </button>
             <button
               onClick={() => navigate(`/AddVariable/${serverName}/?freq=${frequency}`)}
@@ -461,7 +553,52 @@ const Tags=()=>{
         </div>
       
     </div>
+
+    {showSavedTags  && (
+  <div className="overflow-x-auto mt-6">
+    <table className="min-w-full divide-y divide-gray-300 bg-white shadow rounded-lg">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="px-4 max-h-3 border">S. No.</th>
+          <th className="px-4 max-h-3 border">Tag Name</th>
+          <th className="px-4 max-h-3 border">Value</th>
+          <th className="px-4 max-h-3 border">Status</th>
+          <th className="px-4 max-h-3 border">Data Type</th>
+          <th className="px-4 max-h-3 border">Timestamp</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200">
+        {savedTags.map((tag,index) => (
+          <tr key={tag.id}
+          className={`cursor-pointer transition-all ${
+            selectedSavedTag === tag.id ? 'bg-blue-100' : 'hover:bg-gray-100'
+          }`}
+          onClick={()=>handleTagDelete(tag.id)}>
+            <td className="px-4 max-h-3 border">{index+1}</td>
+            <td className="px-4 max-h-3 border">{tag.name}</td>
+            <td className="px-4 max-h-3 border">{tag.valueMag}</td>
+            <td className="px-4 max-h-3 border">{tag.status}</td>
+            <td className="px-4 max-h-3 border">{tag.dataType}</td>
+            <td className="px-4 max-h-3 border">{tag.timestamp}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+   
+
+ 
     </DropZone>
+
+ 
+
+  
+ 
+    <div>
+   
+
+    </div>
 
     
   </DndContext>

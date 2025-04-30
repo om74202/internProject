@@ -1,3 +1,5 @@
+const { pool } = require("../../db/db");
+
 module.exports = (wss) => {
     const express = require("express");
     const WebSocket = require("ws")

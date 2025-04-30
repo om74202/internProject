@@ -49,7 +49,7 @@ toMysqlFormulaRoute.delete('/deleteFormula/:name', async (req, res) => {
         
         const [result] = await pool.execute(`DELETE FROM formula WHERE name ='${name}'`);
 
-        res.json({ message: 'formula  deleted', affectedRows: result.affectedRows });
+        res.json({ message: 'formula  deleted',result, affectedRows: result.affectedRows });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal Server Error" });

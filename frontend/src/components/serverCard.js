@@ -197,7 +197,7 @@ export const ServerListCard=({title , onDelete})=>{
             </div>
 
             <div className="">
-              <label className="block text-gray-700">PORT</label>
+              <label className="block text-gray-700">Port</label>
               <input
                 type="text"
                 value={port}
@@ -258,7 +258,7 @@ export const ServerListCard=({title , onDelete})=>{
               />
             </div>
             <div className="">
-              <label className="block text-gray-700">password</label>
+              <label className="block text-gray-700">Password</label>
               <input
                 type="text"
                 value={password}
@@ -284,7 +284,7 @@ export const ServerListCard=({title , onDelete})=>{
       text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium
        rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none
         dark:focus:ring-blue-800
-      'onClick={checkConnection} >{"connect"}</button>
+      'onClick={checkConnection} >{"Connect"}</button>
                </div>
 
                {connected && (

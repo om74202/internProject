@@ -13,6 +13,12 @@ const AddVariable=()=>{
   
 
   const [tag,setTag] = useState([]);
+
+  //input field 
+  const [inputValue, setInputValue] = useState('');
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef2 = useRef(null);
   
 
 const [searchParams] = useSearchParams();
@@ -28,6 +34,65 @@ const freq = searchParams.get('freq'); // "1000"
   const [showExpressionList , setShowExpressionList] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [UnsavedChanges , setUnsavedChanges] = useState(false);
+
+  const validateRows = (rows) => {
+    for (const row of rows) {
+      if (row.value === undefined || Number.isNaN(row.value)) {
+        alert(`Validation Error: Variable "${row.variableName}" has an invalid value.`);
+        return false;
+      }
+      if (row.status && row.status.toLowerCase() === "bad") {
+        alert(`Validation Error: Variable "${row.variableName}" has a bad status.`);
+        return false;
+      }
+      return true;
+    }
+  };
+
+  // input field 
+
+  useEffect(() => {
+    if (inputValue.trim()) {
+      setFilteredSuggestions(
+        tag.filter(suggestion =>
+          suggestion.toLowerCase().includes(inputValue.toLowerCase())
+      ))
+    } else {
+      setFilteredSuggestions([]);
+    }
+  }, [inputValue, tag]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleInputChange2 = (e) => {
+    setInputValue(e.target.value);
+    setShowSuggestions(true);
+  };
+  const onSelect=(value)=>{
+    setNewRow(prev=>({...prev,tagName:value}))
+  }
+
+  const handleSuggestionClick = (suggestion) => {
+    onSelect(suggestion);
+    setInputValue(suggestion);
+    setShowSuggestions(false);
+    // if(setEmpty===true){
+    //   setInputValue('');
+    // }
+  };
+  
 
 
   // for error 
@@ -126,6 +191,7 @@ const freq = searchParams.get('freq'); // "1000"
   }catch(e){
     console.log(e)
   }finally{
+    setInputValue('')
     setNewRow({
       value:'',
         variableName:'',
@@ -140,26 +206,39 @@ const freq = searchParams.get('freq'); // "1000"
   };
 
 
-  const saveVariables = async ()=>{
-    try{
-      rows.map(async(row,index)=>{
-        const response=await axios.post(`${process.env.REACT_APP_BASE_URL}/addVariable`,{
-          name:row.variableName,
-          nodeId:row.tagID,
-          dataType:row.dataType,
-          expression:row.expression,
-          serverName:serverName,
-          frequency:row.subscriptionRate,
-          nodeName:row.tagName,
+  const saveVariables = async () => {
+    if(!validateRows(rows)){
+      return;
+    }
+    try {
+      const promises = rows.map((row, index) => {
+        return axios.post(`${process.env.REACT_APP_BASE_URL}/addVariable`, {
+          name: row.variableName.trim(),
+          nodeId: row.tagID,
+          dataType: row.dataType,
+          expression: row.expression,
+          serverName: serverName,
+          frequency: row.subscriptionRate,
+          nodeName: row.tagName,
           createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
         })
       })
-      alert("Variables Added Successfully")
+  
+      const responses = await Promise.allSettled(promises);  // wait for all requests
+      console.log(responses)
+  
+     
+          alert("Variables saved successfully")
+        
+      
+    
       setRows([]);
-    }catch(e){
-      alert("internal Server error")
+    } catch (e) {
+      console.error(e);
+      alert("Internal Server Error");
     }
   }
+  
 
 
   useEffect(() => {
@@ -178,7 +257,7 @@ const freq = searchParams.get('freq'); // "1000"
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/serverTags/${serverName}`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/addVariable/unbinded/tags/${serverName}`);
         setTag(response.data.map((item) => item.name));
       } catch (error) {
         console.error("Error fetching tags:", error);
@@ -272,8 +351,45 @@ const freq = searchParams.get('freq'); // "1000"
           className="border max-h-10 p-2 rounded"
         />
         <div>
-        <AutocompleteInput placeholder={"Tag Name"}  suggestions={tag} onSelect={(value) => setNewRow(prev => ({ ...prev, tagName: value }))} 
- />
+        {/* <AutocompleteInput placeholder={"Tag Name"} value={newRow.tagName}    suggestions={tag} onSelect={(value) => setNewRow(prev => ({ ...prev, tagName: value }))} 
+ /> */}
+  <div className="autocomplete-wrapper" ref={wrapperRef2}>
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange2}
+        onFocus={() => setShowSuggestions(true)}
+        placeholder="Select Tag"
+        className="autocomplete-input  bg-slate-200 border rounded-lg h-9 border-gray-300  max-w-1/2"
+      />
+      
+      {showSuggestions && filteredSuggestions.length > 0 && (
+        <ul className="suggestions-list">
+          {filteredSuggestions.map((suggestion, index) => (
+            <li 
+              key={index}
+              onClick={() => handleSuggestionClick(suggestion)}
+              className="suggestion-item mouse-pointer hover:bg-gray-200"
+            >
+              {suggestion}
+            </li>
+          ))}
+        </ul>
+      )}
+      {showSuggestions && filteredSuggestions.length == 0 && (
+        <ul className="suggestions-list">
+          {tag.map((suggestion, index) => (
+            <li 
+              key={index}
+              onClick={() => handleSuggestionClick(suggestion)}
+              className="suggestion-item mouse-pointer hover:bg-gray-200"
+            >
+              {suggestion}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
         </div>
 
        

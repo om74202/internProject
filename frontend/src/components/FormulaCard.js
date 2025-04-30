@@ -12,6 +12,7 @@ export const ListCardFormula=({title})=>{
   const [dataType , setDataType] = useState("")
   const {serverName} = useParams();
   const [variables , setVariables]=useState([])
+  const [params, setParams]=useState([]);
 
 
   useEffect(() => {
@@ -26,6 +27,13 @@ export const ListCardFormula=({title})=>{
   
     fetchData();
   }, []);
+
+  useEffect(()=>{
+    const variableNames = [...new Set(
+      expression.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || []
+    )];
+    setParams(variableNames);
+  },[expression]);
 
 
     const saveFormula = async ()=>{
@@ -66,12 +74,19 @@ export const ListCardFormula=({title})=>{
       };
     
       fetchData();
+
+      
     }, []);
 
 
     const handleDelete=async()=>{
         try{const response =await axios.delete(`${process.env.REACT_APP_BASE_URL}/addFormula/deleteFormula/${title}`);
-        console.log("deleted ", response.data)
+        console.log("deleted ", response.data, params)
+        params.forEach(async(param)=>{
+          const response2=await axios.put(`${process.env.REACT_APP_BASE_URL}/addVariable/setFormulaStatus/${param}`,{formula:null})
+          console.log("Variable is set to null" , response2.data);
+        })
+        
         }catch(e){
             console.log(e);
             alert("delete unsucessful due to ",e);

@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 
-const AutocompleteInput = ({placeholder, suggestions = [] , onSelect ,setEmpty , value}) => {
-  const [inputValue, setInputValue] = useState('');
+const AutocompleteInput = ({placeholder, suggestions = [] , onSelect ,setEmpty , value=''}) => {
+  const [inputValue, setInputValue] = useState(value || '');
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef(null);
+
+  console.log("Value is ",value," inputvalue is ",inputValue)
 
   // Filter suggestions based on input
   useEffect(() => {

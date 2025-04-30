@@ -33,7 +33,8 @@ fetchTagRoute.post('/', async (req, res) => {
     securityMode = "none",
     securityPolicy = "none",
     username,
-    password
+    password,
+    certificate,
   } = req.body;
 
   try {
@@ -49,9 +50,11 @@ fetchTagRoute.post('/', async (req, res) => {
     });
 
     await client.connect(endurl);
-    const session = await client.createSession(
-      username ? { userName: username, password } : { type: "anonymous" }
-    );
+    if(username!=="" ){
+      session = await client.createSession({ userName: username, password: password });
+  }else{
+      session = await client.createSession();
+  }
 
     const nodesToRead = [{
         nodeId: variable.nodeId,
