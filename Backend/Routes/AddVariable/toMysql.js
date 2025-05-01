@@ -236,7 +236,7 @@ toMysqlRoute.post('/tags' , async (req, res)=>{
     try{
         const { name, nodeId , dataType ,serverName } = req.body;
     const [result] = await pool.execute(
-      'INSERT  INTO tags ( name , nodeId , dataType , serverName ) VALUES (?, ? ,?, ?)',
+      'INSERT IGNORE INTO tags ( name , nodeId , dataType , serverName ) VALUES (?, ? ,?, ?)',
       [name ?? null, nodeId ?? null, dataType ?? null , serverName]
     );
     console.log("sucessfull   " , name)

@@ -76,6 +76,19 @@ const Tags=()=>{
 
       
     }, []);
+    const validateTags = () => {
+      for (const row of tags) {
+        if (row.valueMag === undefined || Number.isNaN(row.valueMag)) {
+          alert(`Validation Error: Variable "${row.name}" has an invalid value.`);
+          return false;
+        }
+        if ( row.status.toLowerCase() !== "good") {
+          alert(`Validation Error: Variable "${row.name}" has a bad status.`);
+          return false;
+        }
+        return true;
+      }
+    };
 
     useEffect(()=>{
       const fetchRetentionTags= async()=>{
@@ -374,6 +387,12 @@ const Tags=()=>{
   };
 
   const saveTags = async ()=>{
+    if(tags.length===0){
+      alert("Please add some tags to save");
+      return;
+    }else if(!validateTags()){
+      return;
+    }
 
     try{
       const responses = await Promise.all(
